@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "mobile",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "agrinex",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "primaryColor": "#10B981",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7FAFC"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#F7FAFC"
+      },
+      "package": "com.agrinex.app",
+      "googleServicesFile": "./android/app/google-services.json",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#F7FAFC",
+      "barStyle": "dark-content",
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#F7FAFC",
+      "barStyle": "dark-content"
+    }
+  }
+}
