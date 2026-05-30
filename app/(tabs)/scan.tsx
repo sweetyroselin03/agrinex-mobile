@@ -172,7 +172,7 @@ export default function ScanTab() {
   // Main Return with AnimatePresence for smooth transitions
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {showCamera ? (
           <MotiView 
             key="camera"
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   analysisHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16,
   },
-  diseaseLabel: { fontSize: 10, fontWeight: '850', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
+  diseaseLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
   diseaseTitleText: { fontSize: 19, fontWeight: '900', letterSpacing: -0.2 },
   confidenceBadgePremium: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   confidenceTextPremium: { fontSize: 13, fontWeight: '800' },

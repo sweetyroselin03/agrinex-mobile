@@ -374,7 +374,7 @@ export default function ChatTab() {
       }
 
       const options = {
-        mediaTypes: ['images'] as const,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.75,
       };
@@ -524,16 +524,27 @@ export default function ChatTab() {
 
   const handleLanguageCycle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const buttons: Array<{
+      text: string;
+      onPress?: () => void;
+      style?: 'default' | 'cancel' | 'destructive';
+    }> = LANGUAGES.map((lang) => ({
+      text: lang.name,
+      onPress: () => {
+        setSelectedLanguage(lang.name);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      },
+      style: 'default',
+    }));
+    buttons.push({
+      text: 'Cancel',
+      style: 'cancel',
+    });
+
     Alert.alert(
       'Select Language',
       'Choose preferred language for AI responses:',
-      LANGUAGES.map((lang) => ({
-        text: lang.name,
-        onPress: () => {
-          setSelectedLanguage(lang.name);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        },
-      })).concat([{ text: 'Cancel', style: 'cancel' }])
+      buttons
     );
   };
 
@@ -695,7 +706,7 @@ export default function ChatTab() {
                           { backgroundColor: theme.card, borderColor: theme.border },
                         ]}
                       >
-                        <Markdown style={mdStyles(isDarkMode, theme)}>{item.text}</Markdown>
+                        <Markdown style={mdStyles(isDarkMode, theme) as any}>{item.text}</Markdown>
 
                         <TouchableOpacity
                           style={styles.copyBtn}
@@ -1118,7 +1129,7 @@ const mdStyles = (isDark: boolean, theme: any) => ({
   heading1: {
     color: theme.primary,
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '800' as const,
     marginTop: 10,
     marginBottom: 4,
     borderBottomWidth: 1,
@@ -1128,19 +1139,19 @@ const mdStyles = (isDark: boolean, theme: any) => ({
   heading2: {
     color: '#059669',
     fontSize: 14.2,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     marginTop: 8,
     marginBottom: 3,
   },
   heading3: {
     color: '#10B981',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '800' as const,
     marginTop: 6,
     marginBottom: 2,
   },
   strong: {
-    fontWeight: '800',
+    fontWeight: '800' as const,
     color: '#059669',
   },
   bullet_list: {
@@ -1397,7 +1408,7 @@ const styles = StyleSheet.create({
 
   // Sidebar ChatGPT Slide Modal
   sidebarContainer: { flex: 1, flexDirection: 'row' },
-  sidebarBackdrop: { position: 'absolute', ...StyleSheet.absoluteFillObject },
+  sidebarBackdrop: { ...StyleSheet.absoluteFillObject },
   sidebarDrawer: {
     width: 270,
     height: '100%',

@@ -217,17 +217,21 @@ function SafeTabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              activeOpacity={0.9}
-              style={{
-                top: -22,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            />
-          ),
+          tabBarButton: (props) => {
+            const { delayLongPress, ...rest } = props;
+            return (
+              <TouchableOpacity
+                {...rest}
+                delayLongPress={delayLongPress ?? undefined}
+                activeOpacity={0.9}
+                style={{
+                  top: -22,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              />
+            );
+          },
           tabBarIcon: () => (
             <View style={[styles.scanButtonOuter]}>
               <View style={[styles.scanButton, { borderColor: isDarkMode ? '#1e293b' : '#ECFDF5' }]}>

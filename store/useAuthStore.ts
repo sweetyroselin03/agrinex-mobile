@@ -19,6 +19,8 @@ interface User {
   profile_picture?: string;
   bio?: string;
   is_verified: boolean;
+  followers_count?: number;
+  following_count?: number;
 }
 
 interface AuthState {
@@ -33,7 +35,7 @@ interface AuthState {
   login: (credentials: any) => Promise<void>;
   register: (userData: any) => Promise<any>;
   setPassword: (email: string, password: string) => Promise<void>;
-  sendOTP: (email: string) => Promise<void>;
+  sendOTP: (email: string) => Promise<any>;
   verifyOTP: (email: string, otp: string) => Promise<any>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (data: any) => Promise<void>;
@@ -44,7 +46,7 @@ interface AuthState {
   reset: () => void;
   clearError: () => void;
   checkAuth: () => Promise<void>;
-  checkAccount: (identifier: string) => Promise<{ exists: boolean; message?: string }>;
+  checkAccount: (identifier: string) => Promise<{ exists: boolean; message?: string; dev_otp?: string }>;
   googleLogin: (idToken: string, profile: any) => Promise<void>;
 }
 

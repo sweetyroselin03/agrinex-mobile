@@ -93,7 +93,7 @@ export default function OTPScreen() {
 
   // Timer countdown
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (timer > 0 && !isVerified) {
       interval = setInterval(() => { setTimer((p) => p - 1); }, 1000);
     }
@@ -298,25 +298,23 @@ export default function OTPScreen() {
 
             {/* Step Indicator (only for register flow) */}
             {params.type === 'register' && (
-              <Animated.View entering={FadeInDown.duration(350)} style={styles.stepRow}>
-                <View style={[styles.stepDot, styles.stepDotDone]} />
-                <View style={[styles.stepLine, styles.stepLineDone]} />
-                <View style={[styles.stepDot, styles.stepDotActive]} />
-                <View style={styles.stepLine} />
-                <View style={styles.stepDot} />
-                <Text style={styles.stepLabel}>Step 2 of 3</Text>
+              <Animated.View entering={FadeInDown.springify().damping(12)} style={styles.stepContainer}>
+                <Text style={styles.stepTitle}>Verify OTP</Text>
+                <Text style={styles.stepProgress}>Step 2 of 3</Text>
+                <View style={styles.stepBarRow}>
+                  <View style={styles.stepBarActive} />
+                  <View style={styles.stepBarActive} />
+                  <View style={styles.stepBarIdle} />
+                </View>
               </Animated.View>
             )}
 
-            {/* Header */}
-            <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-              <View style={styles.shieldWrapper}>
-                <ShieldCheck color={PRIMARY} size={28} />
-              </View>
-              <Text style={styles.title}>{params.type === 'register' ? 'Verify Your Email' : 'Verification Code'}</Text>
-              <Text style={styles.subtitle}>
-                We've sent a 6-digit verification code to{'\n'}
-                <Text style={styles.targetText}>{target}</Text>
+            {/* Description */}
+            <Animated.View entering={FadeInDown.springify().damping(12).delay(100)} style={styles.descSection}>
+              <Text style={styles.headingText}>Enter Code</Text>
+              <Text style={styles.subHeadingText}>
+                We sent a 6-digit verification code to your {isEmail ? 'email address' : 'phone number'}{'\n'}
+                <Text style={styles.subHeadingHighlight}>{target}</Text>
               </Text>
             </Animated.View>
 
@@ -326,7 +324,9 @@ export default function OTPScreen() {
                 {otp.map((digit, index) => (
                   <View key={index} style={styles.inputContainer}>
                     <TextInput
-                      ref={(ref) => (inputRefs.current[index] = ref)}
+                      ref={(ref) => {
+                        inputRefs.current[index] = ref;
+                      }}
                       style={[
                         styles.otpInput,
                         { borderColor: digit ? PRIMARY : BORDER_IDLE },

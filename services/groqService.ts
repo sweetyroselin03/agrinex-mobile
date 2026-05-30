@@ -111,9 +111,37 @@ export async function sendMessage(
 export async function analyzeCropImage(imageUri: string) {
   let base64 = '';
   try {
-    base64 = await FileSystem.readAsStringAsync(imageUri, { encoding: 'base64' });
+    console.log('[groqService] Original imageUri:', imageUri);
+
+    // Normalize URI for Android content:// URIs
+    let localUri = imageUri;
+
+    if (imageUri.startsWith('content://')) {
+      const fileName = `crop_${Date.now()}.jpg`;
+      const destUri = `${FileSystem.cacheDirectory}${fileName}`;
+      console.log('[groqService] Copying content:// to:', destUri);
+      await FileSystem.copyAsync({ from: imageUri, to: destUri });
+      localUri = destUri;
+    } else if (!imageUri.startsWith('file://')) {
+      localUri = `file://${imageUri}`;
+    }
+
+    console.log('[groqService] Final localUri:', localUri);
+
+    const fileInfo = await FileSystem.getInfoAsync(localUri);
+    console.log('[groqService] File info:', JSON.stringify(fileInfo));
+
+    if (!fileInfo.exists) {
+      throw new Error('File does not exist: ' + localUri);
+    }
+
+    base64 = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    console.log('[groqService] base64 length:', base64.length);
+
   } catch (e) {
-    console.error('[groqService] Failed to read image for vision analysis:', e);
+    console.error('[groqService] Failed to read image:', e);
     throw new Error('Unable to read selected crop image file.');
   }
 
@@ -158,7 +186,7 @@ Return a valid JSON object ONLY (do not include markdown wrapping like \`\`\`jso
           Authorization: `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'llama-3.2-11b-vision-preview',
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           response_format: { type: 'json_object' },
           messages: [
             {
@@ -212,7 +240,7 @@ export async function streamGroqResponse(
       Authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama3-70b-8192',
+      model: 'llama-3.3-70b-versatile',
       messages,
       temperature: 0.6,
       top_p: 0.9,

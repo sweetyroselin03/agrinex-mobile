@@ -361,12 +361,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   aiTitle: {
-    color: Colors.text,
+    color: Colors.light.text,
     fontSize: 18,
     fontWeight: '800',
   },
   aiSubtitle: {
-    color: Colors.textLight,
+    color: Colors.light.textLight,
     fontSize: 13,
   },
   aiScore: {
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   aiText: {
-    color: Colors.text,
+    color: Colors.light.text,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
