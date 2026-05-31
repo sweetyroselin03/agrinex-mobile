@@ -20,12 +20,12 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  MoreVertical, 
-  Plus, 
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MoreVertical,
+  Plus,
   Search,
   X,
   Camera,
@@ -44,7 +44,8 @@ import { MotiView, AnimatePresence } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+
+import * as FileSystem from 'expo-file-system/legacy';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -106,13 +107,13 @@ export default function CommunityTab() {
 
   const { posts, fetchPosts, likePost, createPost, isLoading, error, clearError, addComment, fetchComments, toggleSavePost, savedPostIds, deletePost } = usePostStore();
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fullscreen Image Viewer
@@ -242,7 +243,7 @@ export default function CommunityTab() {
       >
         {/* Post Header */}
         <View style={styles.postHeader}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.authorInfo}
             onPress={() => router.push({ pathname: '/(tabs)/profile', params: { userId: post.user_id } })}
           >
@@ -270,7 +271,7 @@ export default function CommunityTab() {
         <TouchableOpacity onPress={() => router.push(`/post/${post.id}`)}>
           <Text style={[styles.postText, { color: theme.text }]}>{post.content}</Text>
         </TouchableOpacity>
-        
+
         {postImages.length > 0 && (
           <PostImageCarousel
             images={postImages}
@@ -285,21 +286,21 @@ export default function CommunityTab() {
         {/* Post Footer */}
         <View style={[styles.postFooter, { borderTopColor: theme.border }]}>
           <View style={styles.actions}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => likePost(post.id)}
               style={[styles.actionButton, post.is_liked && { backgroundColor: isDarkMode ? '#451a1a' : '#FEE2E2' }]}
             >
-              <Heart 
-                color={post.is_liked ? theme.error : theme.textLight} 
-                size={20} 
+              <Heart
+                color={post.is_liked ? theme.error : theme.textLight}
+                size={20}
                 fill={post.is_liked ? theme.error : 'transparent'}
               />
               <Text style={[styles.actionText, { color: theme.textLight }, post.is_liked && { color: theme.error }]}>
                 {post.likes_count || 0}
               </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.actionButton}
               onPress={() => router.push(`/post/${post.id}`)}
             >
@@ -350,7 +351,7 @@ export default function CommunityTab() {
           <Text style={[styles.headerTitle, { color: theme.text }]}>AgriNex Community</Text>
           <Text style={[styles.headerSubtitle, { color: theme.textLight }]}>Connect with expert farmers</Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.plusButton, { backgroundColor: theme.primary }]}
           onPress={() => setIsPostModalVisible(true)}
         >
@@ -454,7 +455,7 @@ export default function CommunityTab() {
                     <X color={theme.text} size={24} />
                   </TouchableOpacity>
                   <Text style={[styles.modalTitle, { color: theme.text }]}>Create Post</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.postSubmitButton, { backgroundColor: theme.primary }, !newPostContent.trim() && { backgroundColor: theme.border }]}
                     onPress={handleShowPreview}
                     disabled={!newPostContent.trim()}
@@ -487,7 +488,7 @@ export default function CommunityTab() {
                       {selectedImages.map((uri, idx) => (
                         <View key={idx} style={styles.selectedImageContainer}>
                           <Image source={{ uri }} style={styles.selectedImage} />
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.removeImageButton}
                             onPress={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
                           >
@@ -521,7 +522,7 @@ export default function CommunityTab() {
                     <ChevronLeft color={theme.text} size={24} />
                   </TouchableOpacity>
                   <Text style={[styles.modalTitle, { color: theme.text }]}>Preview Post</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.postSubmitButton, { backgroundColor: theme.primary }]}
                     onPress={handlePublishPost}
                     disabled={isUploading}
@@ -554,7 +555,7 @@ export default function CommunityTab() {
                     {selectedImages.length > 0 && (
                       <PostImageCarousel
                         images={selectedImages}
-                        onImagePress={() => {}}
+                        onImagePress={() => { }}
                       />
                     )}
                   </View>

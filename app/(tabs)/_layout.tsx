@@ -8,22 +8,18 @@ import {
   MessageCircle, 
   User,
 } from 'lucide-react-native';
-import { View, StyleSheet, Platform, Dimensions, TouchableOpacity, Keyboard, ActivityIndicator, Text } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { MotiView, MotiText } from 'moti';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Keyboard, ActivityIndicator, Text } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useThemeStore } from '../../store/useThemeStore';
 
 const { width } = Dimensions.get('window');
 
-// Global fallback style for error safety
 const errorStyles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0B1220', // Sleek dark mode background
+    backgroundColor: '#0B1220',
     padding: 24,
   },
   title: {
@@ -37,30 +33,18 @@ const errorStyles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
     textAlign: 'center',
-  }
+  },
 });
 
-// Fallback Error Boundary to intercept navigation crashes
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
+interface ErrorBoundaryProps { children: ReactNode; }
+interface ErrorBoundaryState { hasError: boolean; }
 
 class NavigationErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(_: Error): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
+  public state: ErrorBoundaryState = { hasError: false };
+  public static getDerivedStateFromError(_: Error): ErrorBoundaryState { return { hasError: true }; }
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[NavigationErrorBoundary] Caught navigation error:', error, errorInfo);
+    console.error('[NavigationErrorBoundary]', error, errorInfo);
   }
-
   public render() {
     if (this.state.hasError) {
       return (
@@ -75,24 +59,12 @@ class NavigationErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundar
   }
 }
 
-const TabBarIcon = ({ Icon, color, focused }: any) => {
-  return (
-    <View style={styles.tabIconContainer}>
-      <Icon size={26} color={color} strokeWidth={focused ? 2.5 : 2} />
-      {focused && (
-        <View
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: '#10B981',
-            marginTop: 4,
-          }}
-        />
-      )}
-    </View>
-  );
-};
+const TabBarIcon = ({ Icon, color, focused }: { Icon: any; color: string; focused: boolean }) => (
+  <View style={styles.tabIconContainer}>
+    <Icon size={24} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+    {focused && <View style={styles.activeDot} />}
+  </View>
+);
 
 export default function TabLayout() {
   return (
@@ -104,50 +76,19 @@ export default function TabLayout() {
 
 function SafeTabLayout() {
   const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
   const pathname = usePathname();
-  const router = useRouter();
-  
-  // Safe useNavigation hook call. If it throws outside navigation context, the boundary will catch it.
+
   let navigation: any = null;
-  try {
-    navigation = useNavigation();
-  } catch (err) {
-    console.warn('[TabLayout] useNavigation not ready:', err);
-  }
+  try { navigation = useNavigation(); } catch (err) {}
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    // Keyboard is imported safely from react-native now
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
+    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { show.remove(); hide.remove(); };
   }, []);
 
-  // Safe navigation state listener implementation
-  useEffect(() => {
-    if (!navigation || typeof navigation.addListener !== 'function') {
-      console.log('[TabLayout] Navigation listener skipped safely: navigation object or addListener is undefined.');
-      return;
-    }
-
-    // Attach listener with optional chaining guard
-    const unsubscribe = navigation.addListener ? navigation.addListener('state', (e: any) => {
-      console.log('[TabLayout] Navigation state changed');
-    }) : undefined;
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [navigation]);
-
-  // Loading Fallback Screen if navigation is initializing
   if (!navigation) {
     return (
       <View style={[errorStyles.container, { backgroundColor: isDarkMode ? '#0B1220' : '#F8FAFC' }]}>
@@ -159,7 +100,6 @@ function SafeTabLayout() {
     );
   }
 
-  // Hide tab bar on scan screen or when keyboard is open
   const isScanning = pathname === '/scan';
   const shouldHideTabBar = isScanning || keyboardVisible;
 
@@ -175,16 +115,13 @@ function SafeTabLayout() {
           bottom: 18,
           left: 16,
           right: 16,
-          height: 82,
+          height: 72,
           borderRadius: 40,
           backgroundColor: isDarkMode ? '#1e293b' : '#FFFFFF',
-          paddingBottom: 10,
-          paddingTop: 10,
+          paddingBottom: 0,
+          paddingTop: 0,
           shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 8,
-          },
+          shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.08,
           shadowRadius: 12,
           elevation: 10,
@@ -194,10 +131,12 @@ function SafeTabLayout() {
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          marginTop: 8,
+          flex: 1,
+          height: 72,
         },
       }}
     >
+      {/* ── Visible tabs ── */}
       <Tabs.Screen
         name="index"
         options={{
@@ -217,28 +156,20 @@ function SafeTabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          tabBarButton: (props) => {
-            const { delayLongPress, ...rest } = props;
-            return (
-              <TouchableOpacity
-                {...rest}
-                delayLongPress={delayLongPress ?? undefined}
-                activeOpacity={0.9}
-                style={{
-                  top: -22,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              />
-            );
-          },
-          tabBarIcon: () => (
-            <View style={[styles.scanButtonOuter]}>
-              <View style={[styles.scanButton, { borderColor: isDarkMode ? '#1e293b' : '#ECFDF5' }]}>
-                <Scan size={26} color="white" strokeWidth={2.5} />
+          tabBarButton: (props: any) => (
+            <TouchableOpacity
+              onPress={props.onPress ?? undefined}
+              activeOpacity={0.85}
+              style={{ top: -20, justifyContent: 'center', alignItems: 'center', flex: 1 }}
+            >
+              <View style={styles.scanButtonOuter}>
+                <View style={[styles.scanButton, { borderColor: isDarkMode ? '#1e293b' : '#ECFDF5' }]}>
+                  <Scan size={24} color="white" strokeWidth={2.5} />
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ),
+          tabBarIcon: () => null,
         }}
       />
       <Tabs.Screen
@@ -257,6 +188,9 @@ function SafeTabLayout() {
           ),
         }}
       />
+
+      {/* ── Hidden screens (no tab bar entry) ── */}
+      <Tabs.Screen name="create-post" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -265,7 +199,15 @@ const styles = StyleSheet.create({
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 45,
+    width: 44,
+    height: 44,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#10B981',
+    marginTop: 3,
   },
   scanButtonOuter: {
     alignItems: 'center',
@@ -277,23 +219,17 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   scanButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 8,
-    borderColor: '#ECFDF5',
+    borderWidth: 6,
     shadowColor: '#10B981',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 10,
   },
 });
-
-

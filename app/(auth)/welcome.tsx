@@ -1,24 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Image,
-  StatusBar,
-  Pressable,
-  Platform,
+  View, Text, StyleSheet, Dimensions,
+  Image, StatusBar, Pressable, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedScrollHandler,
-  interpolate,
-  withTiming,
-  withSpring,
-  Easing as REasing,
+  useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
+  interpolate, withSpring, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import BrandLogo from '../../components/BrandLogo';
@@ -28,27 +17,42 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-// Design system colors
-const COLOR_PRIMARY = '#00D98B';
-const COLOR_BG = '#000000';
-const COLOR_WHITE = '#FFFFFF';
-const COLOR_TEXT_BODY = 'rgba(255,255,255,0.9)';
-const COLOR_TEXT_MUTED = 'rgba(255,255,255,0.55)';
+const SLIDES = [
+  {
+    title: 'Grow Smarter\nwith AI',
+    description: 'Detect diseases, improve yield, and manage crops effortlessly with cutting-edge AI.',
+    badge: '🌾 Smart Farming',
+    image: require('../../assets/images/splash_wheat_field.png'),
+    accent: '#00D98B',
+  },
+  {
+    title: 'Instant Crop\nDiagnosis',
+    description: 'Point your camera at any leaf and get AI-powered disease detection in seconds.',
+    badge: '🔬 Disease Scanner',
+    image: require('../../assets/images/onboarding_scan.png'),
+    accent: '#38BDF8',
+  },
+  {
+    title: 'Connect\n& Learn',
+    description: 'Share experiences, ask questions, and learn from farmers worldwide.',
+    badge: '👨‍🌾 Community',
+    image: require('../../assets/images/onboarding_ai.png'),
+    accent: '#A78BFA',
+  },
+];
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { isAuthenticated, token } = useAuthStore();
-
   const scrollX = useSharedValue(0);
   const [current, setCurrent] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const scrollRef = useRef<Animated.ScrollView>(null);
-
-  // Animation values for interactive elements
   const buttonScale = useSharedValue(1);
+  const screenOpacity = useSharedValue(0);
 
-  // Check Auto Login
   useEffect(() => {
-    const checkAutoLogin = async () => {
+    const init = async () => {
       try {
         if (isAuthenticated && token) {
           router.replace('/(tabs)');
@@ -59,121 +63,102 @@ export default function WelcomeScreen() {
           router.replace('/(auth)/login');
           return;
         }
-      } catch (_) {}
+      } catch (_) { }
+      setIsReady(true);
+      screenOpacity.value = withTiming(1, { duration: 400 });
     };
-    checkAutoLogin();
+    init();
   }, [isAuthenticated, token]);
 
+  const goToLogin = () => {
+    router.replace('/(auth)/login');
+  };
+
+  const handleFinish = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    screenOpacity.value = withTiming(0, { duration: 300 }, () => {
+      runOnJS(goToLogin)();
+    });
+  };
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (current < SLIDES.length - 1) {
+      const next = current + 1;
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({ x: next * width, y: 0, animated: true });
+      }
+      setCurrent(next);
+    } else {
+      handleFinish();
+    }
+  };
+
   const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (e) => {
-      scrollX.value = e.contentOffset.x;
-    },
+    onScroll: (e) => { scrollX.value = e.contentOffset.x; },
   });
 
   const onMomentumScrollEnd = (e: any) => {
     setCurrent(Math.round(e.nativeEvent.contentOffset.x / width));
   };
 
-  const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (current < 2) {
-      const next = current + 1;
-      scrollRef.current?.scrollTo({ x: next * width, y: 0, animated: true });
-      setCurrent(next);
-    } else {
-      router.replace('/(auth)/login');
-    }
-  };
-
-  const handleSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.replace('/(auth)/login');
-  };
-
-  // Interpolations for cross-fading background images on scroll
-  const bgStyle = (pageIndex: number) =>
+  const bgStyle = (i: number) =>
     useAnimatedStyle(() => {
-      const start = (pageIndex - 1) * width;
-      const center = pageIndex * width;
-      const end = (pageIndex + 1) * width;
+      const start = (i - 1) * width;
+      const center = i * width;
+      const end = (i + 1) * width;
       const opacity = interpolate(scrollX.value, [start, center, end], [0, 1, 0], 'clamp');
       const scale = interpolate(scrollX.value, [start, center, end], [1.08, 1.0, 1.08], 'clamp');
-      const tx = interpolate(scrollX.value, [start, center, end], [width * 0.05, 0, -width * 0.05], 'clamp');
-      return {
-        opacity,
-        transform: [{ scale }, { translateX: tx }],
-      };
+      return { opacity, transform: [{ scale }] };
     });
 
-  // Parallax text animation
-  const contentStyle = (pageIndex: number) =>
+  const contentStyle = (i: number) =>
     useAnimatedStyle(() => {
-      const offset = pageIndex * width;
+      const offset = i * width;
       const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
-      const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [24, 0, -24], 'clamp');
-      return {
-        opacity,
-        transform: [{ translateY: ty }],
-      };
+      const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [30, 0, -30], 'clamp');
+      const scale = interpolate(scrollX.value, [offset - width, offset, offset + width], [0.92, 1, 0.92], 'clamp');
+      return { opacity, transform: [{ translateY: ty }, { scale }] };
     });
 
-  // Slide dot width/opacity mappings
   const getDotStyle = (index: number) =>
     useAnimatedStyle(() => {
       const targetPos = index * width;
       const input = [targetPos - width, targetPos, targetPos + width];
-      const dotW = interpolate(scrollX.value, input, [8, 24, 8], 'clamp');
+      const dotW = interpolate(scrollX.value, input, [8, 28, 8], 'clamp');
       const opacity = interpolate(scrollX.value, input, [0.3, 1.0, 0.3], 'clamp');
-      return {
-        width: dotW,
-        opacity,
-      };
+      return { width: dotW, opacity };
     });
 
+  const screenStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
+
+  if (!isReady) return null;
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, screenStyle]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* ── Background Cross-fading Images (25% dark overlay) ────────────────── */}
+      {SLIDES.map((slide, i) => (
+        <Animated.View key={i} style={[StyleSheet.absoluteFill, bgStyle(i)]}>
+          <Image source={slide.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.93)']}
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      ))}
 
-      {/* Screen 1 Background: Wheat Field */}
-      <Animated.View style={[StyleSheet.absoluteFill, bgStyle(0)]}>
-        <Image
-          source={require('../../assets/images/splash_wheat_field.png')}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.25)' }]} />
-      </Animated.View>
-
-      {/* Screen 2 Background: Leaf Scan */}
-      <Animated.View style={[StyleSheet.absoluteFill, bgStyle(1)]}>
-        <Image
-          source={require('../../assets/images/onboarding_scan.png')}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.25)' }]} />
-      </Animated.View>
-
-      {/* Screen 3 Background: Community/Analytics */}
-      <Animated.View style={[StyleSheet.absoluteFill, bgStyle(2)]}>
-        <Image
-          source={require('../../assets/images/onboarding_ai.png')}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.25)' }]} />
-      </Animated.View>
-
-      {/* ── Top Skip Button (Glassmorphism) ─────────────────────────────────── */}
-      <SafeAreaView edges={['top']} style={styles.skipWrapper}>
-        <Pressable onPress={handleSkip} style={styles.skipBtn}>
+      <SafeAreaView edges={['top']} style={styles.topBar}>
+        <View style={styles.brandRow}>
+          <BrandLogo size={26} animated={false} />
+          <Text style={styles.brandName}>AgriNex</Text>
+        </View>
+        <Pressable onPress={handleFinish} hitSlop={16} style={styles.skipBtn}>
           <Text style={styles.skipText}>Skip</Text>
         </Pressable>
       </SafeAreaView>
 
-      {/* ── Onboarding Content Swiper ── */}
       <Animated.ScrollView
         ref={scrollRef}
         horizontal
@@ -183,149 +168,149 @@ export default function WelcomeScreen() {
         scrollEventThrottle={16}
         onMomentumScrollEnd={onMomentumScrollEnd}
         style={StyleSheet.absoluteFill}
-        contentContainerStyle={{ width: width * 3 }}
+        contentContainerStyle={{ width: width * SLIDES.length }}
       >
-        {/* Screen 1: Grow Smarter with AI */}
-        <View style={styles.slide}>
-          <SafeAreaView style={styles.slideSafe}>
-            <Animated.View style={[styles.contentCard, contentStyle(0)]}>
-              <BrandLogo size={64} animated={false} style={styles.logo} />
-              <Text style={styles.title}>Grow Smarter{'\n'}with AI</Text>
-              <Text style={styles.description}>
-                Detect diseases, improve yield, and manage crops effortlessly.
-              </Text>
-            </Animated.View>
-            <View style={styles.spacer} />
-          </SafeAreaView>
-        </View>
-
-        {/* Screen 2: Instant Crop Diagnosis */}
-        <View style={styles.slide}>
-          <SafeAreaView style={styles.slideSafe}>
-            <Animated.View style={[styles.contentCard, contentStyle(1)]}>
-              <BrandLogo size={64} animated={false} style={styles.logo} />
-              <Text style={styles.title}>Instant Crop{'\n'}Diagnosis</Text>
-              <Text style={styles.description}>
-                AI-powered disease detection in seconds.
-              </Text>
-            </Animated.View>
-            <View style={styles.spacer} />
-          </SafeAreaView>
-        </View>
-
-        {/* Screen 3: Connect & Learn */}
-        <View style={styles.slide}>
-          <SafeAreaView style={styles.slideSafe}>
-            <Animated.View style={[styles.contentCard, contentStyle(2)]}>
-              <BrandLogo size={64} animated={false} style={styles.logo} />
-              <Text style={styles.title}>Connect & Learn</Text>
-              <Text style={styles.description}>
-                Share experiences and learn from farmers worldwide.
-              </Text>
-            </Animated.View>
-            <View style={styles.spacer} />
-          </SafeAreaView>
-        </View>
+        {SLIDES.map((slide, i) => (
+          <View key={i} style={styles.slide}>
+            <View style={styles.slideInner}>
+              <Animated.View style={[styles.contentBlock, contentStyle(i)]}>
+                <View style={[styles.badge, {
+                  borderColor: slide.accent + '60',
+                  backgroundColor: slide.accent + '22',
+                }]}>
+                  <Text style={[styles.badgeText, { color: slide.accent }]}>{slide.badge}</Text>
+                </View>
+                <Text style={styles.title}>{slide.title}</Text>
+                <View style={[styles.accentLine, { backgroundColor: slide.accent }]} />
+                <Text style={styles.description}>{slide.description}</Text>
+              </Animated.View>
+            </View>
+          </View>
+        ))}
       </Animated.ScrollView>
 
-      {/* ── Bottom Glassmorphic Actions ── */}
       <View style={styles.bottomContainer}>
-        {/* Pagination indicators */}
         <View style={styles.indicatorRow}>
-          {[0, 1, 2].map((i) => (
-            <Animated.View key={i} style={[styles.dot, getDotStyle(i)]} />
+          {SLIDES.map((slide, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.dot,
+                getDotStyle(i),
+                { backgroundColor: current === i ? SLIDES[current].accent : 'rgba(255,255,255,0.3)' },
+              ]}
+            />
           ))}
         </View>
 
-        {/* Transparent glassmorphism CTA button */}
-        <Animated.View style={{ width: '100%', transform: [{ scale: buttonScale }] }}>
+        <Animated.View style={[styles.btnWrapper, { transform: [{ scale: buttonScale }] }]}>
           <Pressable
             onPressIn={() => { buttonScale.value = withSpring(0.97); }}
             onPressOut={() => { buttonScale.value = withSpring(1); }}
             onPress={handleNext}
-            style={styles.primaryGlassBtn}
+            style={styles.primaryBtn}
           >
-            <Text style={styles.primaryBtnText}>
-              {current === 2 ? 'Get Started' : 'Next'}
-            </Text>
+            <LinearGradient
+              colors={[SLIDES[current].accent, SLIDES[current].accent + 'BB']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.primaryBtnGradient}
+            >
+              <Text style={styles.primaryBtnText}>
+                {current === SLIDES.length - 1 ? '🌱  Get Started' : 'Next  →'}
+              </Text>
+            </LinearGradient>
           </Pressable>
         </Animated.View>
 
-        {/* Account login fallback text */}
-        <Pressable onPress={handleSkip} style={styles.loginLink}>
-          <Text style={styles.loginLinkText}>Already have an account? Log In</Text>
+        <Pressable onPress={handleFinish}>
+          <Text style={styles.loginText}>
+            Already have an account?{' '}
+            <Text style={{ color: SLIDES[current].accent, fontWeight: '800' }}>Log In</Text>
+          </Text>
         </Pressable>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: '#000' },
+  slide: { width, height },
+  slideInner: {
     flex: 1,
-    backgroundColor: COLOR_BG,
-  },
-  slide: {
-    width,
-    height,
-  },
-  slideSafe: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
     paddingHorizontal: 28,
+    paddingBottom: 230,
   },
-  contentCard: {
+  contentBlock: { width: '100%' },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 56 : 44,
+    paddingBottom: 12,
   },
-  logo: {
-    marginBottom: height * 0.03,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  title: {
-    fontSize: 40,
+  brandName: {
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: '900',
-    color: COLOR_WHITE,
-    textAlign: 'center',
-    lineHeight: 46,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
+  },
+  skipBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  skipText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  badgeText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.3 },
+  title: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    lineHeight: 48,
+    letterSpacing: -0.8,
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
+  accentLine: {
+    width: 44,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 14,
+    marginBottom: 14,
+  },
   description: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 25,
     fontWeight: '500',
-    color: COLOR_TEXT_BODY,
-    textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 12,
+    color: 'rgba(255,255,255,0.78)',
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-  },
-  spacer: {
-    height: 180,
-  },
-  skipWrapper: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 16 : 10,
-    right: 20,
-    zIndex: 100,
-  },
-  skipBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  skipText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
   bottomContainer: {
     position: 'absolute',
@@ -333,42 +318,39 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
   },
   indicatorRow: {
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#00D98B',
-  },
-  primaryGlassBtn: {
+  dot: { height: 8, borderRadius: 4 },
+  btnWrapper: { width: '100%' },
+  primaryBtn: {
     width: '100%',
-    height: 56,
-    borderRadius: 28,
+    borderRadius: 30,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+  },
+  primaryBtnGradient: {
+    height: 58,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   primaryBtnText: {
-    color: COLOR_WHITE,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  loginLink: {
-    marginTop: 4,
-  },
-  loginLinkText: {
-    color: COLOR_TEXT_MUTED,
+  loginText: {
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

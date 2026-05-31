@@ -1,5 +1,5 @@
 import client from '../api/client';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export interface DiseaseResult {
   disease_name: string;
@@ -34,17 +34,17 @@ import { Image as RNImage } from 'react-native';
 async function validateImageQuality(imageUri: string): Promise<{ valid: boolean; issue?: string }> {
   try {
     const info = await FileSystem.getInfoAsync(imageUri, { size: true } as any);
-    
+
     if (!info.exists) {
       return { valid: false, issue: 'Image file not found. Please try again.' };
     }
-    
+
     // Check file size — too small likely means very low quality or extremely poor lighting
     const sizeKB = ((info as any).size || 0) / 1024;
     if (sizeKB < 5) {
       return { valid: false, issue: 'Image is too blurry or dark. Ensure good lighting and take the photo closer.' };
     }
-    
+
     // Check if file size is suspiciously large
     const sizeMB = sizeKB / 1024;
     if (sizeMB > 25) {
@@ -62,7 +62,7 @@ async function validateImageQuality(imageUri: string): Promise<{ valid: boolean;
         return { valid: false, issue: 'Invalid aspect ratio. Align the leaf centered inside the camera borders.' };
       }
     }
-    
+
     return { valid: true };
   } catch (error) {
     console.log('Quality validation error:', error);
@@ -74,7 +74,7 @@ async function validateImageQuality(imageUri: string): Promise<{ valid: boolean;
 // Main Analysis Function — Multi-Stage Pipeline
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export async function analyzeImage(imageUri: string): Promise<DiseaseResult> {
-  
+
   // ── STAGE 2: Image Quality Validation ──
   const quality = await validateImageQuality(imageUri);
   if (!quality.valid) {
@@ -106,7 +106,7 @@ export async function analyzeImage(imageUri: string): Promise<DiseaseResult> {
     });
 
     const dataUrl = `data:image/jpeg;base64,${base64}`;
-    
+
     // 15-second timeout for two-stage scan requests
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -117,7 +117,7 @@ export async function analyzeImage(imageUri: string): Promise<DiseaseResult> {
     });
 
     clearTimeout(timeoutId);
-    
+
     if (response.data && response.data.disease_name) {
       return {
         disease_name: response.data.disease_name || 'Unknown',
