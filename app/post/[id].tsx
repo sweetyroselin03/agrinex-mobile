@@ -24,9 +24,8 @@ import {
   MoreVertical
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Colors from '../../constants/Colors';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { usePostStore } from '../../store/usePostStore';
-import { useThemeStore } from '../../store/useThemeStore';
 import { MotiView } from 'moti';
 
 const { width } = Dimensions.get('window');
@@ -34,9 +33,7 @@ const { width } = Dimensions.get('window');
 export default function PostDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light;
-  if (!theme) return null; // Prevent crash
+  const { isDarkMode, theme } = useAppTheme();
 
   const { posts, likePost, fetchComments, addComment } = usePostStore();
   const [post, setPost] = useState<any>(null);

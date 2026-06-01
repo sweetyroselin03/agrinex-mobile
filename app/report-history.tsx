@@ -12,7 +12,7 @@ import { MotiView, AnimatePresence } from 'moti';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
@@ -40,8 +40,7 @@ type FilterOption = 'all' | 'favorites' | 'healthy' | 'warning' | 'critical';
 
 export default function ReportHistory() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const [scans, setScans] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

@@ -26,23 +26,17 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import Toast from '../../components/Toast';
 
 const { width, height } = Dimensions.get('window');
 
-// ─── Design Tokens ─────────────────────────────────────────────────────────────
-const BG = '#0B1220';
-const PRIMARY = '#00E38C';
-const PRIMARY_END = '#00C97B';
-const CARD_BG = 'rgba(255,255,255,0.05)';
-const BORDER_IDLE = 'rgba(255,255,255,0.08)';
-const BORDER_FOCUS = '#00E38C';
-const TEXT_PRIMARY = '#FFFFFF';
-const TEXT_MUTED = 'rgba(255,255,255,0.55)';
-
-// Stable Input Component removed to prevent Android/iOS keyboard blur issues
-
 export default function ForgotPasswordScreen() {
+  const { isDarkMode, theme } = useAppTheme();
+  const PRIMARY = theme.primary;
+  const PRIMARY_END = theme.secondary;
+  const TEXT_PRIMARY = theme.text;
+  const TEXT_MUTED = theme.textLight;
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -106,13 +100,13 @@ export default function ForgotPasswordScreen() {
   }, [email, isLoading]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
       {/* ── Minimal ambient background ── */}
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={['rgba(0,217,139,0.06)', 'transparent']}
+          colors={[isDarkMode ? 'rgba(0,217,139,0.06)' : 'rgba(0,217,139,0.03)', 'transparent']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -131,17 +125,20 @@ export default function ForgotPasswordScreen() {
           >
 
             {/* Back */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <ArrowLeft color="rgba(255,255,255,0.6)" size={20} />
+            <TouchableOpacity 
+              style={[styles.backButton, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]} 
+              onPress={() => router.back()}
+            >
+              <ArrowLeft color={theme.textLight} size={20} />
             </TouchableOpacity>
 
             {/* Icon + Header */}
             <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-              <View style={styles.iconCircle}>
+              <View style={[styles.iconCircle, { backgroundColor: isDarkMode ? 'rgba(0,217,139,0.10)' : 'rgba(0,217,139,0.06)', borderColor: theme.border }]}>
                 <Lock color={PRIMARY} size={26} />
               </View>
-              <Text style={styles.title}>Forgot Password?</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: theme.text }]}>Forgot Password?</Text>
+              <Text style={[styles.subtitle, { color: theme.textLight }]}>
                 No worries! Enter your email and we'll send you a recovery code.
               </Text>
             </Animated.View>
@@ -152,19 +149,22 @@ export default function ForgotPasswordScreen() {
                 onPress={() => emailRef.current?.focus()}
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'email' && styles.inputWrapperFocused,
+                  { 
+                    backgroundColor: theme.card, 
+                    borderColor: focusedField === 'email' ? theme.primary : theme.border 
+                  },
                 ]}
               >
                 <Mail
-                  color={focusedField === 'email' ? PRIMARY : 'rgba(255,255,255,0.35)'}
+                  color={focusedField === 'email' ? PRIMARY : theme.textLight}
                   size={18}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={emailRef}
-                  style={styles.input}
+                  style={[styles.input, { color: theme.text }]}
                   placeholder="Email address"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={theme.placeholder}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={email}
@@ -180,7 +180,7 @@ export default function ForgotPasswordScreen() {
 
             {/* Send Button */}
             <View style={styles.buttonGroup}>
-              <View style={styles.primaryBtnShadow}>
+              <View style={[styles.primaryBtnShadow, { shadowColor: PRIMARY }]}>
                 <Pressable
                   onPress={handleSend}
                   disabled={isLoading}
@@ -200,9 +200,9 @@ export default function ForgotPasswordScreen() {
 
             {/* Back to Login */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Remember your password? </Text>
+              <Text style={[styles.footerText, { color: theme.textLight }]}>Remember your password? </Text>
               <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.footerLink}>Sign In</Text>
+                <Text style={[styles.footerLink, { color: theme.primary }]}>Sign In</Text>
               </TouchableOpacity>
             </View>
 
@@ -214,7 +214,7 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -223,40 +223,28 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 32,
   },
   header: { alignItems: 'center', marginBottom: 32 },
   iconCircle: {
     width: 64, height: 64, borderRadius: 32,
-    backgroundColor: 'rgba(0,217,139,0.10)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0,217,139,0.15)',
   },
-  title: { fontSize: 28, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, marginBottom: 10, textAlign: 'center' },
-  subtitle: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 8 },
+  title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.6, marginBottom: 10, textAlign: 'center' },
+  subtitle: { fontSize: 15, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 8 },
   form: { gap: 14 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center', height: 58,
-    borderRadius: 18, backgroundColor: CARD_BG, borderWidth: 1,
-    borderColor: BORDER_IDLE, paddingHorizontal: 16,
-  },
-  inputWrapperFocused: {
-    borderColor: PRIMARY,
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    borderRadius: 18, borderWidth: 1, paddingHorizontal: 16,
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 16, fontWeight: '500', color: TEXT_PRIMARY, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
   buttonGroup: { marginTop: 28 },
   primaryBtnShadow: {
     width: '100%',
-    shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -267,6 +255,6 @@ const styles = StyleSheet.create({
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   primaryText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.2 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
-  footerText: { fontSize: 14, fontWeight: '500', color: TEXT_MUTED },
-  footerLink: { fontSize: 14, fontWeight: '700', color: PRIMARY },
+  footerText: { fontSize: 14, fontWeight: '500' },
+  footerLink: { fontSize: 14, fontWeight: '700' },
 });

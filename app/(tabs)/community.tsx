@@ -39,7 +39,7 @@ import {
 } from 'lucide-react-native';
 import { usePostStore } from '../../store/usePostStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { MotiView, AnimatePresence } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
@@ -101,9 +101,7 @@ const PostImageCarousel = ({ images, onImagePress }: { images: string[], onImage
 export default function CommunityTab() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light;
-  if (!theme) return null; // Prevent crash
+  const { isDarkMode, theme } = useAppTheme();
 
   const { posts, fetchPosts, likePost, createPost, isLoading, error, clearError, addComment, fetchComments, toggleSavePost, savedPostIds, deletePost } = usePostStore();
   const [refreshing, setRefreshing] = useState(false);

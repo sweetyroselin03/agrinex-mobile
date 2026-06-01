@@ -16,6 +16,7 @@ import Animated, {
   useAnimatedScrollHandler,
   interpolate,
   withSpring,
+  SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -63,6 +64,105 @@ const SLIDES = [
   },
 ];
 
+interface DotProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  activeColor: string;
+}
+
+function RedirectDot({ index, scrollX, activeColor }: DotProps) {
+  const dotStyle = useAnimatedStyle(() => {
+    const targetPos = index * width;
+    const input = [targetPos - width, targetPos, targetPos + width];
+    const dotW = interpolate(scrollX.value, input, [8, 28, 8], 'clamp');
+    const opacity = interpolate(scrollX.value, input, [0.35, 1.0, 0.35], 'clamp');
+    return { width: dotW, opacity };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        dotStyle,
+        { backgroundColor: activeColor },
+      ]}
+    />
+  );
+}
+
+interface SlideProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  slide: typeof SLIDES[0];
+}
+
+function RedirectSlide({ index, scrollX, slide }: SlideProps) {
+  const IconComponent = slide.icon;
+
+  const contentStyle = useAnimatedStyle(() => {
+    const offset = index * width;
+    const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
+    const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [40, 0, -40], 'clamp');
+    const scale = interpolate(scrollX.value, [offset - width, offset, offset + width], [0.88, 1, 0.88], 'clamp');
+    return { opacity, transform: [{ translateY: ty }, { scale }] };
+  });
+
+  return (
+    <View style={styles.slide}>
+      <View style={styles.slideInner}>
+        {/* Badge */}
+        <Animated.View style={[styles.badgeContainer, contentStyle]}>
+          <View style={[styles.badge, { borderColor: `${slide.accentColor}50`, backgroundColor: `${slide.accentColor}18` }]}>
+            <Text style={[styles.badgeText, { color: slide.iconColor }]}>{slide.badge}</Text>
+          </View>
+        </Animated.View>
+
+        {/* Icon */}
+        <Animated.View style={[styles.iconContainer, contentStyle]}>
+          <View style={[styles.iconOuterRing, { borderColor: `${slide.accentColor}30` }]}>
+            <View style={[styles.iconCircle, { backgroundColor: `${slide.accentColor}18` }]}>
+              <View style={[styles.iconInnerCircle, { backgroundColor: `${slide.accentColor}25` }]}>
+                <IconComponent color={slide.iconColor} size={60} strokeWidth={1.5} />
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Text */}
+        <Animated.View style={[styles.textContainer, contentStyle]}>
+          <Text style={styles.title}>{slide.title}</Text>
+          <View style={[styles.titleUnderline, { backgroundColor: slide.accentColor }]} />
+          <Text style={styles.description}>{slide.description}</Text>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+interface BackgroundGradProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  gradient: typeof SLIDES[0]['gradient'];
+}
+
+function RedirectBgGrad({ index, scrollX, gradient }: BackgroundGradProps) {
+  const bgStyle = useAnimatedStyle(() => {
+    const center = index * width;
+    const opacity = interpolate(scrollX.value, [center - width, center, center + width], [0, 1, 0], 'clamp');
+    return { opacity };
+  });
+
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, bgStyle]}>
+      <LinearGradient
+        colors={[...gradient, '#000000']}
+        locations={[0, 0.4, 0.75, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
+  );
+}
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const scrollX = useSharedValue(0);
@@ -71,7 +171,9 @@ export default function OnboardingScreen() {
   const buttonScale = useSharedValue(1);
 
   const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (e) => { scrollX.value = e.contentOffset.x; },
+    onScroll: (e) => {
+      scrollX.value = e.contentOffset.x;
+    },
   });
 
   const onMomentumScrollEnd = (e: any) => {
@@ -79,7 +181,9 @@ export default function OnboardingScreen() {
   };
 
   const completeOnboarding = async () => {
-    try { await AsyncStorage.setItem(ONBOARDING_KEY, 'true'); } catch (_) { }
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    } catch (_) {}
     router.replace('/(auth)/welcome');
   };
 
@@ -93,45 +197,14 @@ export default function OnboardingScreen() {
     }
   };
 
-  const getDotStyle = (index: number) =>
-    useAnimatedStyle(() => {
-      const targetPos = index * width;
-      const input = [targetPos - width, targetPos, targetPos + width];
-      const dotW = interpolate(scrollX.value, input, [8, 28, 8], 'clamp');
-      const opacity = interpolate(scrollX.value, input, [0.35, 1.0, 0.35], 'clamp');
-      return { width: dotW, opacity };
-    });
-
-  const getContentStyle = (pageIndex: number) =>
-    useAnimatedStyle(() => {
-      const offset = pageIndex * width;
-      const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
-      const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [40, 0, -40], 'clamp');
-      const scale = interpolate(scrollX.value, [offset - width, offset, offset + width], [0.88, 1, 0.88], 'clamp');
-      return { opacity, transform: [{ translateY: ty }, { scale }] };
-    });
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       {/* Animated background gradients */}
-      {SLIDES.map((slide, i) => {
-        const bgStyle = useAnimatedStyle(() => {
-          const center = i * width;
-          const opacity = interpolate(scrollX.value, [center - width, center, center + width], [0, 1, 0], 'clamp');
-          return { opacity };
-        });
-        return (
-          <Animated.View key={i} style={[StyleSheet.absoluteFill, bgStyle]}>
-            <LinearGradient
-              colors={[...slide.gradient, '#000000']}
-              locations={[0, 0.4, 0.75, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
-        );
-      })}
+      {SLIDES.map((slide, i) => (
+        <RedirectBgGrad key={i} index={i} scrollX={scrollX} gradient={slide.gradient} />
+      ))}
 
       {/* Skip Button — transparent with border */}
       <SafeAreaView edges={['top']} style={styles.skipWrapper}>
@@ -157,41 +230,9 @@ export default function OnboardingScreen() {
         style={StyleSheet.absoluteFill}
         contentContainerStyle={{ width: width * SLIDES.length }}
       >
-        {SLIDES.map((slide, i) => {
-          const IconComponent = slide.icon;
-          return (
-            <View key={i} style={styles.slide}>
-              <View style={styles.slideInner}>
-
-                {/* Badge */}
-                <Animated.View style={[styles.badgeContainer, getContentStyle(i)]}>
-                  <View style={[styles.badge, { borderColor: `${slide.accentColor}50`, backgroundColor: `${slide.accentColor}18` }]}>
-                    <Text style={[styles.badgeText, { color: slide.iconColor }]}>{slide.badge}</Text>
-                  </View>
-                </Animated.View>
-
-                {/* Icon */}
-                <Animated.View style={[styles.iconContainer, getContentStyle(i)]}>
-                  <View style={[styles.iconOuterRing, { borderColor: `${slide.accentColor}30` }]}>
-                    <View style={[styles.iconCircle, { backgroundColor: `${slide.accentColor}18` }]}>
-                      <View style={[styles.iconInnerCircle, { backgroundColor: `${slide.accentColor}25` }]}>
-                        <IconComponent color={slide.iconColor} size={60} strokeWidth={1.5} />
-                      </View>
-                    </View>
-                  </View>
-                </Animated.View>
-
-                {/* Text */}
-                <Animated.View style={[styles.textContainer, getContentStyle(i)]}>
-                  <Text style={styles.title}>{slide.title}</Text>
-                  <View style={[styles.titleUnderline, { backgroundColor: slide.accentColor }]} />
-                  <Text style={styles.description}>{slide.description}</Text>
-                </Animated.View>
-
-              </View>
-            </View>
-          );
-        })}
+        {SLIDES.map((slide, i) => (
+          <RedirectSlide key={i} index={i} scrollX={scrollX} slide={slide} />
+        ))}
       </Animated.ScrollView>
 
       {/* Bottom Controls */}
@@ -199,13 +240,11 @@ export default function OnboardingScreen() {
         {/* Dots */}
         <View style={styles.indicatorRow}>
           {SLIDES.map((slide, i) => (
-            <Animated.View
+            <RedirectDot
               key={i}
-              style={[
-                styles.dot,
-                getDotStyle(i),
-                { backgroundColor: current === i ? SLIDES[current].accentColor : 'rgba(255,255,255,0.3)' },
-              ]}
+              index={i}
+              scrollX={scrollX}
+              activeColor={current === i ? SLIDES[current].accentColor : 'rgba(255,255,255,0.3)'}
             />
           ))}
         </View>

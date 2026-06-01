@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   RefreshControl,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -17,104 +17,87 @@ import {
   MessageCircle, 
   UserPlus, 
   Zap,
-  MoreHorizontal,
   CheckCircle2,
   Trash2,
   BellOff
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
-import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 const { width } = Dimensions.get('window');
 
-const NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'like',
-    user: 'Farmer Rahul',
-    content: 'liked your post about organic wheat.',
-    time: '2m ago',
-    read: false,
-    icon: Heart,
-    iconColor: '#EF4444'
-  },
-  {
-    id: '2',
-    type: 'comment',
-    user: 'Expert Amit',
-    content: 'commented on your crop scan: "Great progress!"',
-    time: '1h ago',
-    read: false,
-    icon: MessageCircle,
-    iconColor: '#3B82F6'
-  },
-  {
-    id: '3',
-    type: 'follow',
-    user: 'Green Agrotech',
-    content: 'started following you.',
-    time: '3h ago',
-    read: true,
-    icon: UserPlus,
-    iconColor: '#10B981'
-  },
-  {
-    id: '4',
-    type: 'alert',
-    user: 'AgriNex AI',
-    content: 'Weather alert: Heavy rain expected in Maharashtra.',
-    time: '5h ago',
-    read: true,
-    icon: Zap,
-    iconColor: '#F59E0B'
-  },
-  {
-    id: '5',
-    type: 'like',
-    user: 'Priya S.',
-    content: 'liked your comment.',
-    time: '1d ago',
-    read: true,
-    icon: Heart,
-    iconColor: '#EF4444'
-  }
-];
-
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light;
-  if (!theme) return null; // Prevent crash
+  const { isDarkMode, theme } = useAppTheme();
+  const {
+    notifications,
+    fetchNotifications,
+    markAllRead,
+    markOneRead,
+    clearAll,
+    isLoading
+  } = useNotificationStore();
 
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await fetchNotifications();
+    setRefreshing(false);
   };
 
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const getIconConfig = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'like':
+        return { icon: Heart, color: '#EF4444', label: 'Like' };
+      case 'comment':
+        return { icon: MessageCircle, color: '#3B82F6', label: 'Comment' };
+      case 'follow':
+        return { icon: UserPlus, color: '#00D26A', label: 'Follow' };
+      case 'alert':
+      default:
+        return { icon: Zap, color: '#F59E0B', label: 'Alert' };
+    }
   };
 
-  const clearAll = () => {
-    setNotifications([]);
+  const formatTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 600);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${Math.floor(diffMins / 60)}h ago`;
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    } catch (_) {
+      return 'Recently';
+    }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: theme.background }]}>
-          <ChevronLeft color={theme.text} size={28} />
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { borderColor: theme.border, backgroundColor: theme.background }]}>
+          <ChevronLeft color={theme.text} size={24} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Notifications</Text>
-        <TouchableOpacity onPress={markAllRead}>
-          <CheckCircle2 color={theme.primary} size={24} />
-        </TouchableOpacity>
+        {notifications.length > 0 ? (
+          <TouchableOpacity onPress={markAllRead} activeOpacity={0.7} style={styles.actionBtn}>
+            <CheckCircle2 color={theme.primary} size={22} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
       <ScrollView
@@ -122,42 +105,62 @@ export default function NotificationsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
         contentContainerStyle={styles.scrollContent}
       >
-        <AnimatePresence>
-          {notifications.length > 0 ? (
-            notifications.map((notif, index) => (
-              <MotiView
-                key={notif.id}
-                from={{ opacity: 0, translateX: -20 }}
-                animate={{ opacity: 1, translateX: 0 }}
-                transition={{ delay: index * 100 }}
-                style={[
-                  styles.notifCard, 
-                  { backgroundColor: theme.card, borderColor: theme.border },
-                  !notif.read && { borderLeftWidth: 4, borderLeftColor: theme.primary }
-                ]}
-              >
-                <View style={[styles.iconBox, { backgroundColor: theme.mint }]}>
-                  <notif.icon color={notif.iconColor} size={20} fill={notif.type === 'like' ? notif.iconColor : 'transparent'} />
+        {isLoading && !refreshing ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        ) : (
+          <AnimatePresence>
+            {notifications.length > 0 ? (
+              notifications.map((notif, index) => {
+                const config = getIconConfig(notif.type);
+                const IconComponent = config.icon;
+                return (
+                  <MotiView
+                    key={notif.id}
+                    from={{ opacity: 0, translateY: 10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: index * 50 }}
+                    style={[
+                      styles.notifCard, 
+                      { backgroundColor: theme.card, borderColor: theme.border },
+                      !notif.is_read && { borderLeftWidth: 4, borderLeftColor: theme.primary }
+                    ]}
+                  >
+                    <TouchableOpacity 
+                      style={styles.notifMainRow}
+                      activeOpacity={0.8}
+                      onPress={() => markOneRead(notif.id)}
+                    >
+                      <View style={[styles.iconBox, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+                        <IconComponent color={config.color} size={20} fill={notif.type === 'like' ? config.color : 'transparent'} />
+                      </View>
+                      <View style={styles.notifContent}>
+                        <Text style={[styles.notifText, { color: theme.text }]}>
+                          {notif.actor_name ? (
+                            <Text style={styles.userName}>{notif.actor_name}</Text>
+                          ) : null}
+                          {' '}{notif.message}
+                        </Text>
+                        <Text style={[styles.notifTime, { color: theme.textLight }]}>{formatTime(notif.created_at)}</Text>
+                      </View>
+                      {!notif.is_read && <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />}
+                    </TouchableOpacity>
+                  </MotiView>
+                );
+              })
+            ) : (
+              <View style={styles.emptyContainer}>
+                <View style={[styles.emptyIconCircle, { backgroundColor: isDarkMode ? '#0E241B' : '#E6FBF3' }]}>
+                  <BellOff color={theme.primary} size={40} />
                 </View>
-                <View style={styles.notifContent}>
-                  <Text style={[styles.notifText, { color: theme.text }]}>
-                    <Text style={styles.userName}>{notif.user}</Text> {notif.content}
-                  </Text>
-                  <Text style={[styles.notifTime, { color: theme.textLight }]}>{notif.time}</Text>
-                </View>
-                {!notif.read && <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />}
-              </MotiView>
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <View style={[styles.emptyIconCircle, { backgroundColor: theme.mint }]}>
-                <BellOff color={theme.primary} size={48} />
+                <Text style={[styles.emptyTitle, { color: theme.text }]}>All caught up!</Text>
+                <Text style={[styles.emptySubtitle, { color: theme.textLight }]}>You don't have any new notifications right now.</Text>
               </View>
-              <Text style={[styles.emptyTitle, { color: theme.text }]}>All caught up!</Text>
-              <Text style={[styles.emptySubtitle, { color: theme.textLight }]}>You don't have any new notifications right now.</Text>
-            </View>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        )}
 
         {notifications.length > 0 && (
           <TouchableOpacity style={styles.clearBtn} onPress={clearAll}>
@@ -180,44 +183,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
+  },
+  loaderContainer: {
+    paddingVertical: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notifCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    overflow: 'hidden',
+  },
+  notifMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
   },
   iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   notifContent: {
     flex: 1,
@@ -231,12 +245,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   notifTime: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
   },
   unreadDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     marginLeft: 12,
   },
   emptyContainer: {
@@ -245,23 +260,24 @@ const styles = StyleSheet.create({
     paddingVertical: 100,
   },
   emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
   emptySubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     textAlign: 'center',
-    paddingHorizontal: 40,
-    lineHeight: 22,
+    paddingHorizontal: 30,
+    lineHeight: 20,
   },
   clearBtn: {
     flexDirection: 'row',
@@ -272,7 +288,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   clearBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

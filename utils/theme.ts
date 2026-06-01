@@ -1,4 +1,3 @@
-import { useColorScheme } from 'react-native';
 
 export const lightTheme = {
     bg: '#F5F7FA',
@@ -26,7 +25,9 @@ export const darkTheme = {
     gradientStart: 'rgba(0,217,139,0.08)',
 };
 
+import { useAppTheme } from '../hooks/useAppTheme';
+
 export function useTheme() {
-    const scheme = useColorScheme();
-    return scheme === 'light' ? lightTheme : darkTheme;
+    const { isDarkMode } = useAppTheme();
+    return isDarkMode ? darkTheme : lightTheme;
 }

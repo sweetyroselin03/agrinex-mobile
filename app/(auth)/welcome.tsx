@@ -7,7 +7,6 @@ import {
   StatusBar,
   Pressable,
   Platform,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import BrandLogo from '../../components/BrandLogo';
 import * as Haptics from 'expo-haptics';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
@@ -28,32 +28,31 @@ const SLIDES = [
     title: 'Grow Smarter\nwith AI',
     description: 'Detect diseases, improve yield, and manage crops effortlessly with cutting-edge AI.',
     badge: '🌾 Smart Farming',
-    accent: '#00D98B',
-    bgDark: '#022C22',
-    bgLight: '#D1FAE5',
+    accent: '#00D26A',
+    bgDark: '#071824',
+    bgLight: '#ECFDF5',
   },
   {
     title: 'Instant Crop\nDiagnosis',
     description: 'Point your camera at any leaf and get AI-powered disease detection in seconds.',
     badge: '🔬 Disease Scanner',
-    accent: '#38BDF8',
-    bgDark: '#0C1A3A',
+    accent: '#3B82F6',
+    bgDark: '#081724',
     bgLight: '#EFF6FF',
   },
   {
     title: 'Connect\n& Learn',
     description: 'Share experiences, ask questions, and learn from farmers worldwide.',
     badge: '👨‍🌾 Community',
-    accent: '#A78BFA',
-    bgDark: '#2D1B69',
+    accent: '#8B5CF6',
+    bgDark: '#0D091A',
     bgLight: '#F5F3FF',
   },
 ];
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme !== 'light';
+  const { isDarkMode: isDark, theme } = useAppTheme();
   const { isAuthenticated, token } = useAuthStore();
 
   const scrollX = useSharedValue(0);
@@ -64,13 +63,13 @@ export default function WelcomeScreen() {
   const screenOpacity = useSharedValue(0);
 
   // ─── Theme ─────────────────────────────────────────────────────────────────
-  const titleColor = isDark ? '#FFFFFF' : '#0f172a';
-  const descColor = isDark ? 'rgba(255,255,255,0.78)' : 'rgba(15,23,42,0.7)';
-  const brandColor = isDark ? '#FFFFFF' : '#0f172a';
-  const skipColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,23,42,0.5)';
-  const loginColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(15,23,42,0.5)';
-  const inactiveDot = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
-  const containerBg = isDark ? '#000' : '#fff';
+  const titleColor = theme.text;
+  const descColor = theme.textLight;
+  const brandColor = theme.text;
+  const skipColor = theme.textLight;
+  const loginColor = theme.textLight;
+  const inactiveDot = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+  const containerBg = theme.background;
 
   useEffect(() => {
     const init = async () => {
@@ -197,7 +196,7 @@ export default function WelcomeScreen() {
       {/* Top bar */}
       <SafeAreaView edges={['top']} style={styles.topBar}>
         <View style={styles.brandRow}>
-          <BrandLogo size={26} animated={false} />
+          <BrandLogo size={26} animated={false} isDarkMode={isDark} />
           <Text style={[styles.brandName, { color: brandColor }]}>AgriNex</Text>
         </View>
         <Pressable onPress={handleFinish} hitSlop={16} style={styles.skipBtn}>
@@ -298,7 +297,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 28,
-    paddingBottom: 180,
+    paddingBottom: 150,
   },
   contentBlock: { width: '100%', alignItems: 'center' },
   topBar: {
@@ -311,58 +310,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 56 : 44,
+    paddingTop: Platform.OS === 'ios' ? 48 : 36,
     paddingBottom: 12,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brandName: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
   skipBtn: { paddingHorizontal: 4, paddingVertical: 8, backgroundColor: 'transparent' },
-  skipText: { fontSize: 15, fontWeight: '600' },
+  skipText: { fontSize: 14, fontWeight: '600' },
   iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
   },
-  iconEmoji: { fontSize: 52 },
+  iconEmoji: { fontSize: 40 },
   badge: {
     alignSelf: 'center',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderWidth: 1,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  badgeText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.3 },
+  badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   title: {
-    fontSize: 42,
+    fontSize: 32,
     fontWeight: '900',
-    lineHeight: 48,
-    letterSpacing: -0.8,
+    lineHeight: 38,
+    letterSpacing: -0.5,
     textAlign: 'center',
     marginBottom: 0,
   },
-  accentLine: { width: 44, height: 3, borderRadius: 2, marginTop: 14, marginBottom: 14 },
+  accentLine: { width: 40, height: 3, borderRadius: 2, marginTop: 10, marginBottom: 10 },
   description: {
-    fontSize: 16,
-    lineHeight: 25,
+    fontSize: 15,
+    lineHeight: 22,
     fontWeight: '500',
     textAlign: 'center',
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 44 : 32,
+    bottom: Platform.OS === 'ios' ? 36 : 28,
     left: 24,
     right: 24,
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
   },
   indicatorRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -370,14 +369,10 @@ const styles = StyleSheet.create({
   btnWrapper: { width: '100%' },
   primaryBtn: {
     width: '100%',
-    borderRadius: 30,
+    borderRadius: 28,
     overflow: 'hidden',
-    elevation: 10,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
   },
-  primaryBtnGradient: { height: 58, justifyContent: 'center', alignItems: 'center' },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
-  loginText: { fontSize: 14, fontWeight: '600' },
+  primaryBtnGradient: { height: 54, justifyContent: 'center', alignItems: 'center' },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
+  loginText: { fontSize: 13, fontWeight: '600' },
 });

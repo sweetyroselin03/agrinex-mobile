@@ -13,9 +13,11 @@ interface BrandLogoProps {
   size?: number;
   animated?: boolean;
   style?: ViewStyle;
+  /** Pass isDarkMode so the logo container adapts to the current theme */
+  isDarkMode?: boolean;
 }
 
-export default function BrandLogo({ size = 84, animated = false, style }: BrandLogoProps) {
+export default function BrandLogo({ size = 84, animated = false, style, isDarkMode = true }: BrandLogoProps) {
   const pulseScale1 = useSharedValue(1);
   const pulseOpacity1 = useSharedValue(0.45);
   const pulseScale2 = useSharedValue(1);
@@ -108,6 +110,13 @@ export default function BrandLogo({ size = 84, animated = false, style }: BrandL
     borderColor: 'rgba(16,185,129,0.6)',
   };
 
+  const imageContainerStyle = {
+    width: size,
+    height: size,
+    overflow: 'hidden' as const,
+    backgroundColor: 'transparent',
+  };
+
   return (
     <View
       style={[
@@ -135,10 +144,12 @@ export default function BrandLogo({ size = 84, animated = false, style }: BrandL
           animated ? animatedContainerStyle : null,
         ]}
       >
-        <Image
-          source={require('../assets/images/logo.png')}
-          style={{ width: size, height: size, resizeMode: 'contain' }}
-        />
+        <View style={imageContainerStyle}>
+          <Image
+            source={require('../assets/images/logo.png')}
+            style={{ width: size, height: size, resizeMode: 'contain' }}
+          />
+        </View>
       </Animated.View>
     </View>
   );

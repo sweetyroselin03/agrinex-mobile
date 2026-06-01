@@ -31,7 +31,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import client from '../../api/client';
 
 const { width } = Dimensions.get('window');
@@ -39,8 +39,7 @@ const { width } = Dimensions.get('window');
 export default function Dashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { isDarkMode } = useThemeStore();
-  const theme = useMemo(() => isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light, [isDarkMode]);
+  const { isDarkMode, theme } = useAppTheme();
 
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +129,7 @@ export default function Dashboard() {
               <CloudSun color="#F59E0B" size={64} />
             </View>
 
-            <View style={[styles.weatherStats, { backgroundColor: isDarkMode ? '#1e293b' : '#F8FAFC' }]}>
+            <View style={[styles.weatherStats, { backgroundColor: theme.surface }]}>
               <View style={styles.statItem}>
                 <Droplet color="#3B82F6" size={18} />
                 <Text style={[styles.statText, { color: theme.text }]}>{weather?.humidity || 45}%</Text>

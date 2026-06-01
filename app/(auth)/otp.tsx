@@ -13,7 +13,6 @@ import {
   InteractionManager,
   StatusBar,
   Pressable,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -28,6 +27,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import Toast from '../../components/Toast';
 import { checkInternet } from '../../utils/network';
 
@@ -36,8 +36,7 @@ const { width, height } = Dimensions.get('window');
 export default function OTPScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const scheme = useColorScheme();
-  const isDark = scheme !== 'light';
+  const { isDarkMode: isDark, theme } = useAppTheme();
   
   const { verifyOTP, sendOTP, isLoading } = useAuthStore();
 
@@ -51,26 +50,26 @@ export default function OTPScreen() {
   const isResending = useRef(false);
 
   // ─── Theme Colors ──────────────────────────────────────────────────────────
-  const BG = isDark ? '#0B1220' : '#F8FAFC';
-  const PRIMARY = '#00E38C';
-  const PRIMARY_END = '#00C97B';
-  const CARD_BG = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
-  const BORDER_IDLE = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const TEXT_PRIMARY = isDark ? '#FFFFFF' : '#0F172A';
-  const TEXT_MUTED = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.6)';
-  const backBtnBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const backBtnBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const backIconColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,23,42,0.6)';
-  const stepBarIdleColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const shieldOuterRingBorder = isDark ? 'rgba(0,217,139,0.15)' : 'rgba(0,217,139,0.2)';
-  const shieldInnerRingBorder = isDark ? 'rgba(0,217,139,0.2)' : 'rgba(0,217,139,0.25)';
-  const shieldInnerRingBg = isDark ? 'rgba(0,217,139,0.06)' : 'rgba(0,217,139,0.04)';
-  const shieldCircleBg = isDark ? 'rgba(0,217,139,0.12)' : 'rgba(0,217,139,0.08)';
-  const inputDotBg = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.25)';
-  const successRingBorder = isDark ? 'rgba(0,217,139,0.2)' : 'rgba(0,217,139,0.25)';
-  const successCircleBg = isDark ? 'rgba(0,217,139,0.1)' : 'rgba(0,217,139,0.06)';
-  const successCircleBorder = isDark ? 'rgba(0,217,139,0.2)' : 'rgba(0,217,139,0.25)';
-  const progressContainerBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const BG = theme.background;
+  const PRIMARY = theme.primary;
+  const PRIMARY_END = theme.secondary;
+  const CARD_BG = theme.card;
+  const BORDER_IDLE = theme.border;
+  const TEXT_PRIMARY = theme.text;
+  const TEXT_MUTED = theme.textLight;
+  const backBtnBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+  const backBtnBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const backIconColor = theme.text;
+  const stepBarIdleColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const shieldOuterRingBorder = isDark ? 'rgba(34,229,139,0.15)' : 'rgba(34,229,139,0.1)';
+  const shieldInnerRingBorder = isDark ? 'rgba(34,229,139,0.2)' : 'rgba(34,229,139,0.15)';
+  const shieldInnerRingBg = isDark ? 'rgba(34,229,139,0.06)' : 'rgba(34,229,139,0.04)';
+  const shieldCircleBg = isDark ? 'rgba(34,229,139,0.12)' : 'rgba(34,229,139,0.08)';
+  const inputDotBg = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+  const successRingBorder = isDark ? 'rgba(34,229,139,0.2)' : 'rgba(34,229,139,0.15)';
+  const successCircleBg = isDark ? 'rgba(34,229,139,0.1)' : 'rgba(34,229,139,0.08)';
+  const successCircleBorder = isDark ? 'rgba(34,229,139,0.2)' : 'rgba(34,229,139,0.15)';
+  const progressContainerBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'error' | 'success' }>({
     visible: false, message: '', type: 'error',

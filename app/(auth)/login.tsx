@@ -13,7 +13,6 @@ import {
   Dimensions,
   StatusBar,
   Pressable,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,6 +26,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, ArrowLeft, ChevronRight, Lock, Eye, EyeOff, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import BrandLogo from '../../components/BrandLogo';
 import Toast from '../../components/Toast';
 import * as Haptics from 'expo-haptics';
@@ -36,8 +36,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme !== 'light';
+  const { isDarkMode: isDark, theme } = useAppTheme();
   
   const { isLoading, isAuthenticated, login, reset } = useAuthStore();
 
@@ -52,19 +51,19 @@ export default function LoginScreen() {
   const passwordRef = useRef<TextInput>(null);
 
   // ─── Theme Colors ──────────────────────────────────────────────────────────
-  const BG = isDark ? '#0B1220' : '#F8FAFC';
-  const PRIMARY = '#00E38C';
-  const PRIMARY_END = '#00C97B';
-  const CARD_BG = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
-  const BORDER_IDLE = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const TEXT_PRIMARY = isDark ? '#FFFFFF' : '#0F172A';
-  const TEXT_MUTED = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.6)';
-  const placeholderColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.4)';
-  const iconColorIdle = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(15,23,42,0.4)';
-  const backBtnBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const backBtnBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  const backIconColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,23,42,0.6)';
-  const checkboxBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.2)';
+  const BG = theme.background;
+  const PRIMARY = theme.primary;
+  const PRIMARY_END = theme.secondary;
+  const CARD_BG = theme.card;
+  const BORDER_IDLE = theme.border;
+  const TEXT_PRIMARY = theme.text;
+  const TEXT_MUTED = theme.textLight;
+  const placeholderColor = theme.placeholder;
+  const iconColorIdle = theme.textLight;
+  const backBtnBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+  const backBtnBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const backIconColor = theme.text;
+  const checkboxBorder = theme.border;
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'error' | 'success' }>({
     visible: false, message: '', type: 'error',
@@ -162,7 +161,7 @@ export default function LoginScreen() {
 
             {/* Logo */}
             <Animated.View entering={FadeInDown.duration(450)} style={styles.logoRow}>
-              <BrandLogo size={32} />
+              <BrandLogo size={32} isDarkMode={isDark} />
               <Text style={[styles.logoName, { color: TEXT_PRIMARY }]}>AgriNex</Text>
             </Animated.View>
 

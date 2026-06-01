@@ -57,6 +57,23 @@ export async function safeApiCall<T>(
     } catch (err: any) {
       lastError = err;
 
+      // Only retry on network timeouts/disconnects or server-side issues (HTTP 500+)
+      const shouldRetry = (() => {
+        if (err?.message === 'timeout') return true;
+        if (err?.response) {
+          const status = err.response.status;
+          return status >= 500; // 500+ are server errors, 400-499 are client errors
+        }
+        return true; // No response from server (network failure, cold start connection loss)
+      })();
+
+      if (!shouldRetry) {
+        console.log(
+          `[safeApiCall] Non-retryable error status ${err?.response?.status || 'unknown'}. Aborting retries.`
+        );
+        throw err;
+      }
+
       if (attempt < maxRetries) {
         const delay = getBackoffDelay(attempt);
         console.log(

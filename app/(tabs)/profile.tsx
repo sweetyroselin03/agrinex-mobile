@@ -48,7 +48,7 @@ import * as Haptics from 'expo-haptics';
 import Colors from '../../constants/Colors';
 import { useAuthStore } from '../../store/useAuthStore';
 import { usePostStore } from '../../store/usePostStore';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -135,8 +135,7 @@ export default function ProfileTab() {
 
   const { user, updateProfile, checkAuth } = useAuthStore();
   const { posts, userPosts, fetchPosts, fetchUserPosts, fetchSavedPosts, savedPosts, savedPostIds, deletePost, editPost, toggleSavePost } = usePostStore();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const [activeTab, setActiveTab] = useState('posts'); // tabs: posts, scans, saved
   const [uploadingPhoto, setUploadingPhoto] = useState(false);

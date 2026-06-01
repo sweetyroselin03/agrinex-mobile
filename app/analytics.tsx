@@ -16,15 +16,14 @@ import {
 import { useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppTheme } from '../hooks/useAppTheme';
 import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
 
 const { width } = Dimensions.get('window');
 
 export default function Analytics() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const METRICS = [
     { title: 'Total Yield', value: '45.2 Tons', change: '+12%', up: true, color: theme.primary },

@@ -26,16 +26,14 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 import BrandLogo from '../components/BrandLogo';
 
 const { width } = Dimensions.get('window');
 
 export default function AboutScreen() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const FeatureCard = ({ icon: Icon, title, desc }: any) => (
     <View style={[styles.featureCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -65,7 +63,7 @@ export default function AboutScreen() {
             colors={[theme.primary + '20', 'transparent']}
             style={styles.heroGlow}
           />
-          <BrandLogo size={100} animated={true} style={{ marginBottom: 16 }} />
+          <BrandLogo size={100} animated={true} style={{ marginBottom: 16 }} isDarkMode={isDarkMode} />
           <Text style={[styles.appName, { color: theme.text }]}>AgriNex</Text>
           <Text style={[styles.version, { color: theme.textLight }]}>Version 2.0.4 Premium</Text>
           <Text style={[styles.tagline, { color: theme.primary }]}>Smart Farming. Better Future.</Text>

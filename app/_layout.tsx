@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 import { useAuthStore } from '../store/useAuthStore';
 import Colors from '../constants/Colors';
 import { View, Text, StyleSheet, Image } from 'react-native';
@@ -27,7 +28,7 @@ const queryClient = new QueryClient();
 export default function Layout() {
   const [isReady, setIsReady] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true);
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode } = useAppTheme();
   const { isAuthenticated, checkAuth } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
@@ -65,10 +66,16 @@ export default function Layout() {
   useEffect(() => {
     if (!isReady) return;
 
+    // Bypass navigation guards for splash / index route to let animation complete
+    const initialSegment = segments[0] as string | undefined;
+    if (!initialSegment || initialSegment === 'splash') {
+      return;
+    }
+
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
 
-    if (!isAuthenticated && !inAuthGroup && segments[0] !== 'splash' && segments[0] !== 'onboarding' && segments[0] !== 'redirect') {
+    if (!isAuthenticated && !inAuthGroup && segments[0] !== 'onboarding' && segments[0] !== 'redirect') {
       // Route to onboarding first if not seen, otherwise to welcome
       if (!hasSeenOnboarding) {
         router.replace('/onboarding');
@@ -79,21 +86,21 @@ export default function Layout() {
       // Redirect to tabs if authenticated and trying to access auth screens
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments, isReady]);
+  }, [isAuthenticated, segments, isReady, hasSeenOnboarding]);
 
   // Sync navigation theme with our store
-  const navigationTheme = isDarkMode ? DarkTheme : DefaultTheme;
+  const navigationTheme = DarkTheme;
   
   // Custom theme adjustments to match our branding
   const customTheme = {
     ...navigationTheme,
     colors: {
       ...navigationTheme.colors,
-      primary: '#10B981',
-      background: isDarkMode ? '#0F172A' : '#F7FAFC',
-      card: isDarkMode ? '#1E293B' : '#FFFFFF',
-      text: isDarkMode ? '#F8FAFC' : '#0F172A',
-      border: isDarkMode ? '#334155' : '#E2E8F0',
+      primary: '#22E58B',
+      background: '#06131D',
+      card: '#102235',
+      text: '#FFFFFF',
+      border: 'rgba(34,229,139,0.25)',
     }
   };
 
@@ -171,7 +178,7 @@ function SplashScreen({ isDarkMode, bgColor, textColor }: { isDarkMode: boolean;
       <Animated.View pointerEvents="none" style={[splashStyles.blob, splashStyles.blob1, blob1Style, { backgroundColor: '#10B981' }]} />
       <Animated.View pointerEvents="none" style={[splashStyles.blob, splashStyles.blob2, blob2Style, { backgroundColor: '#34D399' }]} />
       <Animated.View style={[splashStyles.logoWrapper, logoStyle]}>
-        <BrandLogo size={84} animated={true} />
+        <BrandLogo size={84} animated={true} isDarkMode={isDarkMode} />
       </Animated.View>
       <Animated.View style={[splashStyles.textBlock, logoStyle]}>
         <Text style={[splashStyles.title, { color: textColor }]}>AgriNex</Text>

@@ -46,7 +46,7 @@ import { MotiView, AnimatePresence } from 'moti';
 import * as ImagePicker from 'expo-image-picker';
 import Colors from '../../constants/Colors';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendMessage, analyzeCropImage } from '../../services/groqService';
 import Markdown from 'react-native-markdown-display';
@@ -96,8 +96,7 @@ interface Conversation {
 
 export default function ChatTab() {
   const { user, logout, checkAuth } = useAuthStore();
-  const { isDarkMode } = useThemeStore();
-  const theme = useMemo(() => (isDarkMode ? Colors.dark : Colors.light), [isDarkMode]);
+  const { isDarkMode, theme } = useAppTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 

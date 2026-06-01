@@ -1,4 +1,4 @@
-package com.agrinex.app
+package com.agrinex.ai
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Keyboard, ActivityIndicator, Text } from 'react-native';
 import Colors from '../../constants/Colors';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -19,19 +19,16 @@ const errorStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0B1220',
     padding: 24,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#F8FAFC',
     marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#94A3B8',
     textAlign: 'center',
   },
 });
@@ -48,10 +45,10 @@ class NavigationErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundar
   public render() {
     if (this.state.hasError) {
       return (
-        <View style={errorStyles.container}>
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text style={errorStyles.title}>Navigation Initializing...</Text>
-          <Text style={errorStyles.subtitle}>Establishing a secure connection to the main dashboard.</Text>
+        <View style={[errorStyles.container, { backgroundColor: '#071824' }]}>
+          <ActivityIndicator size="large" color="#00D26A" />
+          <Text style={[errorStyles.title, { color: '#FFFFFF' }]}>Navigation Initializing...</Text>
+          <Text style={[errorStyles.subtitle, { color: 'rgba(255,255,255,0.7)' }]}>Establishing a secure connection to the main dashboard.</Text>
         </View>
       );
     }
@@ -61,8 +58,8 @@ class NavigationErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundar
 
 const TabBarIcon = ({ Icon, color, focused }: { Icon: any; color: string; focused: boolean }) => (
   <View style={styles.tabIconContainer}>
-    <Icon size={24} color={color} strokeWidth={focused ? 2.5 : 1.8} />
-    {focused && <View style={styles.activeDot} />}
+    <Icon size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+    {focused && <View style={[styles.activeDot, { backgroundColor: color }]} />}
   </View>
 );
 
@@ -75,7 +72,7 @@ export default function TabLayout() {
 }
 
 function SafeTabLayout() {
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode, theme } = useAppTheme();
   const pathname = usePathname();
 
   let navigation: any = null;
@@ -91,9 +88,9 @@ function SafeTabLayout() {
 
   if (!navigation) {
     return (
-      <View style={[errorStyles.container, { backgroundColor: isDarkMode ? '#0B1220' : '#F8FAFC' }]}>
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text style={[errorStyles.title, { color: isDarkMode ? '#F8FAFC' : '#0F172A' }]}>
+      <View style={[errorStyles.container, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color="#00D26A" />
+        <Text style={[errorStyles.title, { color: theme.text }]}>
           Navigation Initializing...
         </Text>
       </View>
@@ -108,8 +105,8 @@ function SafeTabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textLight,
         tabBarStyle: {
           position: 'absolute',
           bottom: 18,
@@ -117,12 +114,12 @@ function SafeTabLayout() {
           right: 16,
           height: 72,
           borderRadius: 40,
-          backgroundColor: isDarkMode ? '#1e293b' : '#FFFFFF',
+          backgroundColor: theme.card,
           paddingBottom: 0,
           paddingTop: 0,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.08,
+          shadowOpacity: isDarkMode ? 0.25 : 0.08,
           shadowRadius: 12,
           elevation: 10,
           borderTopWidth: 0,
@@ -162,8 +159,8 @@ function SafeTabLayout() {
               activeOpacity={0.85}
               style={{ top: -20, justifyContent: 'center', alignItems: 'center', flex: 1 }}
             >
-              <View style={styles.scanButtonOuter}>
-                <View style={[styles.scanButton, { borderColor: isDarkMode ? '#1e293b' : '#ECFDF5' }]}>
+              <View style={[styles.scanButtonOuter, { shadowColor: theme.primary }]}>
+                <View style={[styles.scanButton, { backgroundColor: theme.primary, borderColor: theme.card }]}>
                   <Scan size={24} color="white" strokeWidth={2.5} />
                 </View>
               </View>
@@ -206,30 +203,27 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#10B981',
     marginTop: 3,
   },
   scanButtonOuter: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 12,
   },
   scanButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 6,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });

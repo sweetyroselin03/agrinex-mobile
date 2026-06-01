@@ -19,24 +19,19 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, ArrowLeft, CheckCircle2, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { useAuthStore } from '../../store/useAuthStore';
 import * as Haptics from 'expo-haptics';
 import Toast from '../../components/Toast';
 
 const { height } = Dimensions.get('window');
 
-const BG = '#0B1220';
-const PRIMARY = '#00E38C';
-const PRIMARY_END = '#00C97B';
-const CARD_BG = 'rgba(255,255,255,0.05)';
-const BORDER_IDLE = 'rgba(255,255,255,0.08)';
-const BORDER_FOCUS = '#00E38C';
-const TEXT_PRIMARY = '#FFFFFF';
-const TEXT_MUTED = 'rgba(255,255,255,0.55)';
-
-// PasswordInput component removed to prevent Android/iOS keyboard blur issues
-
 export default function ResetPasswordScreen() {
+  const { isDarkMode, theme } = useAppTheme();
+  const PRIMARY = theme.primary;
+  const PRIMARY_END = theme.secondary;
+  const TEXT_PRIMARY = theme.text;
+  const TEXT_MUTED = theme.textLight;
   const router = useRouter();
   const params = useLocalSearchParams();
   const { resetPassword, isLoading } = useAuthStore();
@@ -81,12 +76,12 @@ export default function ResetPasswordScreen() {
   }, [password, confirmPassword]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={['rgba(0,217,139,0.06)', 'transparent']}
+          colors={[isDarkMode ? 'rgba(0,217,139,0.06)' : 'rgba(0,217,139,0.03)', 'transparent']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -105,17 +100,20 @@ export default function ResetPasswordScreen() {
           >
 
             {/* Back */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <ArrowLeft color="rgba(255,255,255,0.6)" size={20} />
+            <TouchableOpacity 
+              style={[styles.backButton, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]} 
+              onPress={() => router.back()}
+            >
+              <ArrowLeft color={theme.textLight} size={20} />
             </TouchableOpacity>
 
             {/* Icon + Header */}
             <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-              <View style={styles.iconCircle}>
+              <View style={[styles.iconCircle, { backgroundColor: isDarkMode ? 'rgba(0,217,139,0.10)' : 'rgba(0,217,139,0.06)', borderColor: theme.border }]}>
                 <ShieldCheck color={PRIMARY} size={26} />
               </View>
-              <Text style={styles.title}>New Password</Text>
-              <Text style={styles.subtitle}>Set a strong and secure password to protect your account</Text>
+              <Text style={[styles.title, { color: theme.text }]}>New Password</Text>
+              <Text style={[styles.subtitle, { color: theme.textLight }]}>Set a strong and secure password to protect your account</Text>
             </Animated.View>
 
             {/* Form */}
@@ -124,19 +122,19 @@ export default function ResetPasswordScreen() {
                 onPress={() => passwordRef.current?.focus()}
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'password' && styles.inputWrapperFocused,
+                  { backgroundColor: theme.card, borderColor: focusedField === 'password' ? theme.primary : theme.border },
                 ]}
               >
                 <Lock
-                  color={focusedField === 'password' ? PRIMARY : 'rgba(255,255,255,0.35)'}
+                  color={focusedField === 'password' ? PRIMARY : theme.textLight}
                   size={18}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={passwordRef}
-                  style={styles.input}
+                  style={[styles.input, { color: theme.text }]}
                   placeholder="New Password"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={theme.placeholder}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
@@ -149,8 +147,8 @@ export default function ResetPasswordScreen() {
                 />
                 <TouchableOpacity onPress={togglePassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   {showPassword
-                    ? <EyeOff color="rgba(255,255,255,0.35)" size={18} />
-                    : <Eye color="rgba(255,255,255,0.35)" size={18} />
+                    ? <EyeOff color={theme.textLight} size={18} />
+                    : <Eye color={theme.textLight} size={18} />
                   }
                 </TouchableOpacity>
               </Pressable>
@@ -159,19 +157,19 @@ export default function ResetPasswordScreen() {
                 onPress={() => confirmPasswordRef.current?.focus()}
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'confirmPassword' && styles.inputWrapperFocused,
+                  { backgroundColor: theme.card, borderColor: focusedField === 'confirmPassword' ? theme.primary : theme.border },
                 ]}
               >
                 <Lock
-                  color={focusedField === 'confirmPassword' ? PRIMARY : 'rgba(255,255,255,0.35)'}
+                  color={focusedField === 'confirmPassword' ? PRIMARY : theme.textLight}
                   size={18}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={confirmPasswordRef}
-                  style={styles.input}
+                  style={[styles.input, { color: theme.text }]}
                   placeholder="Confirm Password"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={theme.placeholder}
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -184,13 +182,13 @@ export default function ResetPasswordScreen() {
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(p => !p)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   {showConfirmPassword
-                    ? <EyeOff color="rgba(255,255,255,0.35)" size={18} />
-                    : <Eye color="rgba(255,255,255,0.35)" size={18} />
+                    ? <EyeOff color={theme.textLight} size={18} />
+                    : <Eye color={theme.textLight} size={18} />
                   }
                 </TouchableOpacity>
               </Pressable>
 
-              <View style={styles.primaryBtnShadow}>
+              <View style={[styles.primaryBtnShadow, { shadowColor: PRIMARY }]}>
                 <Pressable
                   onPress={handleReset}
                   disabled={isLoading}
@@ -216,7 +214,7 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -225,38 +223,27 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 32,
   },
   header: { alignItems: 'center', marginBottom: 32 },
   iconCircle: {
     width: 64, height: 64, borderRadius: 32,
-    backgroundColor: 'rgba(0,217,139,0.10)',
-    borderWidth: 1, borderColor: 'rgba(0,217,139,0.15)',
+    borderWidth: 1,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 20,
   },
-  title: { fontSize: 28, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 12 },
+  title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.6, textAlign: 'center', marginBottom: 8 },
+  subtitle: { fontSize: 15, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 12 },
   form: { gap: 14 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center', height: 58,
-    borderRadius: 18, backgroundColor: CARD_BG, borderWidth: 1,
-    borderColor: BORDER_IDLE, paddingHorizontal: 16,
-  },
-  inputWrapperFocused: {
-    borderColor: PRIMARY,
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    borderRadius: 18, borderWidth: 1, paddingHorizontal: 16,
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 16, fontWeight: '500', color: TEXT_PRIMARY, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
   primaryBtnShadow: {
     width: '100%',
-    shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

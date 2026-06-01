@@ -13,8 +13,8 @@ import Animated, {
   FadeInDown,
   ZoomIn
 } from 'react-native-reanimated';
+import { useAppTheme } from '../hooks/useAppTheme';
 import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
 
 const { width } = Dimensions.get('window');
 
@@ -54,8 +54,7 @@ const PulseGlow = () => {
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const navItems = [
     { name: 'dashboard', icon: LayoutDashboard, path: '/(tabs)' },

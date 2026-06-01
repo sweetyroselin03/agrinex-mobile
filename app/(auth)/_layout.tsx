@@ -1,10 +1,8 @@
 import { Stack } from 'expo-router';
-import { useThemeStore } from '../../store/useThemeStore';
-import Colors from '../../constants/Colors';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 export default function AuthLayout() {
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { theme } = useAppTheme();
 
   return (
     <Stack

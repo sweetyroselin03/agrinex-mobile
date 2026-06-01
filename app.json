@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AgriNex",
+    "name": "AgriNex AI",
     "slug": "agrinex",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,12 +19,12 @@
       "icon": "./assets/images/icon.png"
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.agrinex.app",
+      "package": "com.agrinex.ai",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "CAMERA",

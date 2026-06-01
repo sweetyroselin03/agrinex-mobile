@@ -19,24 +19,19 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Lock, Eye, EyeOff, ShieldCheck, ChevronRight, Check } from 'lucide-react-native';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { useAuthStore } from '../../store/useAuthStore';
 import * as Haptics from 'expo-haptics';
 import Toast from '../../components/Toast';
 
 const { height } = Dimensions.get('window');
 
-const BG = '#0B1220';
-const PRIMARY = '#00E38C';
-const PRIMARY_END = '#00C97B';
-const CARD_BG = 'rgba(255,255,255,0.05)';
-const BORDER_IDLE = 'rgba(255,255,255,0.08)';
-const BORDER_FOCUS = '#00E38C';
-const TEXT_PRIMARY = '#FFFFFF';
-const TEXT_MUTED = 'rgba(255,255,255,0.55)';
-
-// PasswordInput component removed to prevent Android/iOS keyboard blur issues
-
 export default function SetPasswordScreen() {
+  const { isDarkMode, theme } = useAppTheme();
+  const PRIMARY = theme.primary;
+  const PRIMARY_END = theme.secondary;
+  const TEXT_PRIMARY = theme.text;
+  const TEXT_MUTED = theme.textLight;
   const router = useRouter();
   const params = useLocalSearchParams();
   const { setPassword, isLoading } = useAuthStore();
@@ -107,12 +102,12 @@ export default function SetPasswordScreen() {
   }, [email, passwordVal, confirmPassword, strength]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={['rgba(0,217,139,0.06)', 'transparent']}
+          colors={[isDarkMode ? 'rgba(0,217,139,0.06)' : 'rgba(0,217,139,0.03)', 'transparent']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -132,11 +127,11 @@ export default function SetPasswordScreen() {
 
             {/* Icon + Header */}
             <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-              <View style={styles.iconCircle}>
+              <View style={[styles.iconCircle, { backgroundColor: isDarkMode ? 'rgba(0,217,139,0.10)' : 'rgba(0,217,139,0.06)', borderColor: theme.border }]}>
                 <ShieldCheck color={PRIMARY} size={28} />
               </View>
-              <Text style={styles.title}>Secure Your Account</Text>
-              <Text style={styles.subtitle}>Create a strong password to protect your farming data</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Secure Your Account</Text>
+              <Text style={[styles.subtitle, { color: theme.textLight }]}>Create a strong password to protect your farming data</Text>
             </Animated.View>
 
             {/* Form */}
@@ -145,19 +140,19 @@ export default function SetPasswordScreen() {
                 onPress={() => passwordRef.current?.focus()}
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'password' && styles.inputWrapperFocused,
+                  { backgroundColor: theme.card, borderColor: focusedField === 'password' ? theme.primary : theme.border },
                 ]}
               >
                 <Lock
-                  color={focusedField === 'password' ? PRIMARY : 'rgba(255,255,255,0.35)'}
+                  color={focusedField === 'password' ? PRIMARY : theme.textLight}
                   size={18}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={passwordRef}
-                  style={styles.input}
+                  style={[styles.input, { color: theme.text }]}
                   placeholder="Create Password"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={theme.placeholder}
                   secureTextEntry={!showPassword}
                   value={passwordVal}
                   onChangeText={setPasswordVal}
@@ -170,8 +165,8 @@ export default function SetPasswordScreen() {
                 />
                 <TouchableOpacity onPress={togglePassword} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   {showPassword
-                    ? <EyeOff color="rgba(255,255,255,0.35)" size={18} />
-                    : <Eye color="rgba(255,255,255,0.35)" size={18} />
+                    ? <EyeOff color={theme.textLight} size={18} />
+                    : <Eye color={theme.textLight} size={18} />
                   }
                 </TouchableOpacity>
               </Pressable>
@@ -181,7 +176,7 @@ export default function SetPasswordScreen() {
                 <View style={styles.strengthBox}>
                   <View style={styles.strengthBars}>
                     {[1, 2, 3, 4].map((i) => (
-                      <View key={i} style={[styles.strengthBar, { backgroundColor: i <= strength ? getStrengthColor() : 'rgba(255,255,255,0.08)' }]} />
+                      <View key={i} style={[styles.strengthBar, { backgroundColor: i <= strength ? getStrengthColor() : (isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') }]} />
                     ))}
                   </View>
                   <Text style={[styles.strengthLabel, { color: getStrengthColor() }]}>
@@ -194,19 +189,19 @@ export default function SetPasswordScreen() {
                 onPress={() => confirmPasswordRef.current?.focus()}
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'confirmPassword' && styles.inputWrapperFocused,
+                  { backgroundColor: theme.card, borderColor: focusedField === 'confirmPassword' ? theme.primary : theme.border },
                 ]}
               >
                 <Lock
-                  color={focusedField === 'confirmPassword' ? PRIMARY : 'rgba(255,255,255,0.35)'}
+                  color={focusedField === 'confirmPassword' ? PRIMARY : theme.textLight}
                   size={18}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={confirmPasswordRef}
-                  style={styles.input}
+                  style={[styles.input, { color: theme.text }]}
                   placeholder="Confirm Password"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={theme.placeholder}
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -219,8 +214,8 @@ export default function SetPasswordScreen() {
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(p => !p)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   {showConfirmPassword
-                    ? <EyeOff color="rgba(255,255,255,0.35)" size={18} />
-                    : <Eye color="rgba(255,255,255,0.35)" size={18} />
+                    ? <EyeOff color={theme.textLight} size={18} />
+                    : <Eye color={theme.textLight} size={18} />
                   }
                 </TouchableOpacity>
               </Pressable>
@@ -229,15 +224,15 @@ export default function SetPasswordScreen() {
               <View style={styles.reqGrid}>
                 {requirements.map((req, i) => (
                   <View key={i} style={styles.reqItem}>
-                    <View style={[styles.reqDot, req.met && styles.reqDotMet]}>
+                    <View style={[styles.reqDot, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }, req.met && styles.reqDotMet]}>
                       {req.met && <Check color="white" size={9} strokeWidth={4} />}
                     </View>
-                    <Text style={[styles.reqText, { color: req.met ? TEXT_PRIMARY : TEXT_MUTED }]}>{req.label}</Text>
+                    <Text style={[styles.reqText, { color: req.met ? theme.text : theme.textLight }]}>{req.label}</Text>
                   </View>
                 ))}
               </View>
 
-              <View style={styles.primaryBtnShadow}>
+              <View style={[styles.primaryBtnShadow, { shadowColor: PRIMARY }]}>
                 <Pressable
                   onPress={handleCompleteSetup}
                   disabled={isLoading}
@@ -263,7 +258,7 @@ export default function SetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -273,29 +268,19 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginBottom: 32 },
   iconCircle: {
     width: 64, height: 64, borderRadius: 32,
-    backgroundColor: 'rgba(0,217,139,0.10)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0,217,139,0.15)',
   },
-  title: { fontSize: 28, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 12 },
+  title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.6, textAlign: 'center', marginBottom: 8 },
+  subtitle: { fontSize: 15, fontWeight: '500', lineHeight: 22, textAlign: 'center', paddingHorizontal: 12 },
   form: { gap: 14 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center', height: 58,
-    borderRadius: 18, backgroundColor: CARD_BG, borderWidth: 1,
-    borderColor: BORDER_IDLE, paddingHorizontal: 16,
-  },
-  inputWrapperFocused: {
-    borderColor: PRIMARY,
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    borderRadius: 18, borderWidth: 1, paddingHorizontal: 16,
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 16, fontWeight: '500', color: TEXT_PRIMARY, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
   strengthBox: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 2 },
   strengthBars: { flexDirection: 'row', gap: 5, flex: 1, marginRight: 10 },
   strengthBar: { height: 4, flex: 1, borderRadius: 2 },
@@ -304,14 +289,12 @@ const styles = StyleSheet.create({
   reqItem: { flexDirection: 'row', alignItems: 'center', gap: 6, width: '45%' },
   reqDot: {
     width: 16, height: 16, borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, justifyContent: 'center', alignItems: 'center',
   },
-  reqDotMet: { backgroundColor: PRIMARY, borderColor: PRIMARY },
+  reqDotMet: { backgroundColor: '#22E58B', borderColor: '#22E58B' },
   reqText: { fontSize: 12, fontWeight: '600' },
   primaryBtnShadow: {
     width: '100%',
-    shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

@@ -2,12 +2,10 @@ import React from 'react';
 import { View, Text, Platform, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { HelpCircle, Mail, Globe, Shield } from 'lucide-react-native';
-import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 
 export default function ModalScreen() {
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

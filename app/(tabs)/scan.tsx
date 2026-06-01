@@ -12,8 +12,7 @@ import {
 } from 'lucide-react-native';
 import { MotiView, AnimatePresence } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Colors from '../../constants/Colors';
-import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 import { useRouter } from 'expo-router';
 import { analyzeImage, getDiseaseColor, getConfidenceLabel, getSeverityColor, getSeverityEmoji, DiseaseResult } from '../../services/diseaseDetection';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,9 +23,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function ScanTab() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light;
-  if (!theme) return null;
+  const { isDarkMode, theme } = useAppTheme();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);

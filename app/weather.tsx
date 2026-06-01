@@ -32,7 +32,7 @@ import {
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import Colors from '../constants/Colors';
-import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../api/client';
 import * as Location from 'expo-location';
@@ -80,8 +80,7 @@ const DEMO_WEATHER = {
 
 export default function WeatherScreen() {
   const router = useRouter();
-  const { isDarkMode } = useThemeStore();
-  const theme = isDarkMode ? (Colors?.dark || Colors?.light) : Colors?.light;
+  const { isDarkMode, theme } = useAppTheme();
 
   const [weather, setWeather] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);

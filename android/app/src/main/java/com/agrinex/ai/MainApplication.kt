@@ -1,4 +1,4 @@
-package com.agrinex.app
+package com.agrinex.ai
 
 import android.app.Application
 import android.content.res.Configuration

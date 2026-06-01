@@ -11,6 +11,7 @@ import {
 import { View, StyleSheet, Dimensions, TouchableOpacity, Keyboard, ActivityIndicator, Text } from 'react-native';
 import Colors from '../../constants/Colors';
 import { useThemeStore } from '../../store/useThemeStore';
+import { useAppTheme } from '../../hooks/useAppTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -75,7 +76,7 @@ export default function TabLayout() {
 }
 
 function SafeTabLayout() {
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode } = useAppTheme();
   const pathname = usePathname();
 
   let navigation: any = null;

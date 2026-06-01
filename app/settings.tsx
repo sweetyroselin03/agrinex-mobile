@@ -38,16 +38,31 @@ import * as ImagePicker from 'expo-image-picker';
 import Colors from '../constants/Colors';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAppTheme } from '../hooks/useAppTheme';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout, deleteAccount, updateProfile, user } = useAuthStore();
-  const { isDarkMode, toggleTheme } = useThemeStore();
-  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { themeMode, setThemeMode } = useThemeStore();
+  const { isDarkMode, theme } = useAppTheme();
 
   const [notifications, setNotifications] = useState(true);
   const [weatherPerms, setWeatherPerms] = useState(true);
   const [accountPrivacy, setAccountPrivacy] = useState(false);
+
+  const handleSelectTheme = () => {
+    Alert.alert(
+      'Appearance Settings',
+      'Choose your preferred visual theme.',
+      [
+        { text: 'System Default', onPress: () => setThemeMode('system') },
+        { text: 'Light Mode', onPress: () => setThemeMode('light') },
+        { text: 'Dark Mode', onPress: () => setThemeMode('dark') },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -248,11 +263,9 @@ export default function SettingsScreen() {
             />
             <SettingItem
               icon={Moon}
-              title="Dark Mode"
-              subtitle="Optimize app appearance"
-              type="switch"
-              value={isDarkMode}
-              onToggle={toggleTheme}
+              title="Theme Appearance"
+              subtitle={`Active: ${themeMode === 'system' ? 'System Default' : themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}`}
+              onPress={handleSelectTheme}
             />
             <SettingItem
               icon={Globe}

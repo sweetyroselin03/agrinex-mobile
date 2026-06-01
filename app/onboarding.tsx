@@ -7,7 +7,6 @@ import {
   StatusBar,
   Pressable,
   Platform,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,6 +16,7 @@ import Animated, {
   useAnimatedScrollHandler,
   interpolate,
   withSpring,
+  SharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,31 +30,86 @@ const SLIDES = [
     title: 'Scan Crops\nInstantly',
     description: 'Point your camera at any crop leaf and get AI-powered disease detection in seconds.',
     icon: ScanLine,
-    gradient: ['#064E3B', '#065F46'] as const,
-    iconColor: '#6EE7B7',
+    gradient: ['#0A251C', '#041B13'] as const,
+    iconColor: '#00D26A',
   },
   {
     title: 'AI Farming\nAssistant',
     description: 'Get expert advice on fertilizers, irrigation, pest control, and organic farming in your language.',
     icon: Bot,
-    gradient: ['#1E3A5F', '#1E40AF'] as const,
-    iconColor: '#93C5FD',
+    gradient: ['#0F2130', '#081724'] as const,
+    iconColor: '#3B82F6',
   },
   {
     title: 'Community\nSupport',
     description: 'Connect with farmers worldwide. Share experiences, ask questions, and learn together.',
     icon: Users,
-    gradient: ['#5B21B6', '#6D28D9'] as const,
-    iconColor: '#C4B5FD',
+    gradient: ['#23143A', '#130A24'] as const,
+    iconColor: '#8B5CF6',
   },
   {
     title: 'Market\nIntelligence',
     description: 'Track crop prices, weather forecasts, and get smart insights to maximize your yield and profit.',
     icon: TrendingUp,
-    gradient: ['#92400E', '#B45309'] as const,
-    iconColor: '#FCD34D',
+    gradient: ['#301B0B', '#1B0E05'] as const,
+    iconColor: '#F59E0B',
   },
 ];
+
+interface DotProps {
+  index: number;
+  scrollX: SharedValue<number>;
+}
+
+function OnboardingDot({ index, scrollX }: DotProps) {
+  const dotStyle = useAnimatedStyle(() => {
+    const targetPos = index * width;
+    const input = [targetPos - width, targetPos, targetPos + width];
+    const dotW = interpolate(scrollX.value, input, [8, 24, 8], 'clamp');
+    const opacity = interpolate(scrollX.value, input, [0.3, 1.0, 0.3], 'clamp');
+    return { width: dotW, opacity };
+  });
+
+  return <Animated.View style={[styles.dot, dotStyle]} />;
+}
+
+interface SlideProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  slide: typeof SLIDES[0];
+}
+
+function OnboardingSlide({ index, scrollX, slide }: SlideProps) {
+  const IconComponent = slide.icon;
+
+  const contentStyle = useAnimatedStyle(() => {
+    const offset = index * width;
+    const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
+    const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [20, 0, -20], 'clamp');
+    return { opacity, transform: [{ translateY: ty }] };
+  });
+
+  return (
+    <View style={styles.slide}>
+      <View style={styles.slideInner}>
+        {/* Icon */}
+        <Animated.View style={[styles.iconContainer, contentStyle]}>
+          <View style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', borderWidth: 1 }]}>
+            <View style={[styles.iconInnerCircle, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+              <IconComponent color={slide.iconColor} size={44} strokeWidth={1.8} />
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Text */}
+        <Animated.View style={[styles.textContainer, contentStyle]}>
+          <Text style={styles.title}>{slide.title}</Text>
+          <Text style={styles.description}>{slide.description}</Text>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -94,23 +149,6 @@ export default function OnboardingScreen() {
     completeOnboarding();
   };
 
-  const getDotStyle = (index: number) =>
-    useAnimatedStyle(() => {
-      const targetPos = index * width;
-      const input = [targetPos - width, targetPos, targetPos + width];
-      const dotW = interpolate(scrollX.value, input, [8, 28, 8], 'clamp');
-      const opacity = interpolate(scrollX.value, input, [0.3, 1.0, 0.3], 'clamp');
-      return { width: dotW, opacity };
-    });
-
-  const getContentStyle = (pageIndex: number) =>
-    useAnimatedStyle(() => {
-      const offset = pageIndex * width;
-      const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
-      const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [30, 0, -30], 'clamp');
-      return { opacity, transform: [{ translateY: ty }] };
-    });
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -124,7 +162,7 @@ export default function OnboardingScreen() {
         });
         return (
           <Animated.View key={i} style={[StyleSheet.absoluteFill, bgStyle]}>
-            <LinearGradient colors={[...slide.gradient, '#000000']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={[...slide.gradient, '#071824']} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
           </Animated.View>
         );
       })}
@@ -148,29 +186,9 @@ export default function OnboardingScreen() {
         style={StyleSheet.absoluteFill}
         contentContainerStyle={{ width: width * SLIDES.length }}
       >
-        {SLIDES.map((slide, i) => {
-          const IconComponent = slide.icon;
-          return (
-            <View key={i} style={styles.slide}>
-              <View style={styles.slideInner}>
-                {/* Icon */}
-                <Animated.View style={[styles.iconContainer, getContentStyle(i)]}>
-                  <View style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                    <View style={[styles.iconInnerCircle, { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
-                      <IconComponent color={slide.iconColor} size={56} strokeWidth={1.8} />
-                    </View>
-                  </View>
-                </Animated.View>
-
-                {/* Text */}
-                <Animated.View style={[styles.textContainer, getContentStyle(i)]}>
-                  <Text style={styles.title}>{slide.title}</Text>
-                  <Text style={styles.description}>{slide.description}</Text>
-                </Animated.View>
-              </View>
-            </View>
-          );
-        })}
+        {SLIDES.map((slide, i) => (
+          <OnboardingSlide key={i} index={i} scrollX={scrollX} slide={slide} />
+        ))}
       </Animated.ScrollView>
 
       {/* Bottom Controls */}
@@ -178,7 +196,7 @@ export default function OnboardingScreen() {
         {/* Progress Dots */}
         <View style={styles.indicatorRow}>
           {SLIDES.map((_, i) => (
-            <Animated.View key={i} style={[styles.dot, getDotStyle(i)]} />
+            <OnboardingDot key={i} index={i} scrollX={scrollX} />
           ))}
         </View>
 
@@ -191,7 +209,7 @@ export default function OnboardingScreen() {
             style={styles.primaryBtn}
           >
             <LinearGradient
-              colors={['#10B981', '#059669']}
+              colors={['#00D26A', '#00B85C']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.primaryBtnGradient}
@@ -213,7 +231,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#071824',
   },
   slide: {
     width,
@@ -223,22 +241,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 28,
   },
   iconContainer: {
-    marginBottom: 48,
+    marginBottom: 32,
   },
   iconCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconInnerCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -247,21 +265,21 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 38,
+    fontSize: 30,
     fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 44,
+    lineHeight: 36,
     letterSpacing: -0.5,
   },
   description: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.75)',
     textAlign: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
+    marginTop: 14,
+    paddingHorizontal: 8,
   },
   skipWrapper: {
     position: 'absolute',
@@ -270,29 +288,29 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   skipBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   skipText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 50 : 36,
-    left: 28,
-    right: 28,
+    bottom: Platform.OS === 'ios' ? 44 : 32,
+    left: 24,
+    right: 24,
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
   },
   indicatorRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -300,33 +318,28 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#00D26A',
   },
   primaryBtn: {
     width: '100%',
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
   },
   primaryBtnGradient: {
-    height: 56,
+    height: 54,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryBtnText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   pageText: {
     color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
 });
