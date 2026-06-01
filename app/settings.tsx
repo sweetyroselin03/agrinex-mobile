@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -12,13 +13,13 @@ import {
   Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ChevronLeft, 
-  User, 
-  Bell, 
-  Moon, 
-  Globe, 
-  LogOut, 
+import {
+  ChevronLeft,
+  User,
+  Bell,
+  Moon,
+  Globe,
+  LogOut,
   Info,
   ShieldCheck,
   ChevronRight,
@@ -43,7 +44,7 @@ export default function SettingsScreen() {
   const { logout, deleteAccount, updateProfile, user } = useAuthStore();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
-  
+
   const [notifications, setNotifications] = useState(true);
   const [weatherPerms, setWeatherPerms] = useState(true);
   const [accountPrivacy, setAccountPrivacy] = useState(false);
@@ -54,13 +55,17 @@ export default function SettingsScreen() {
       'Are you sure you want to log out of AgriNex?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          style: 'destructive', 
-          onPress: () => {
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
             logout();
-            router.replace('/(auth)/welcome');
-          } 
+            await AsyncStorage.multiRemove([
+              'agrinex_remembered_creds',
+              'agrinex_onboarding_completed',
+            ]);
+            router.replace('/');
+          }
         }
       ]
     );
@@ -108,7 +113,7 @@ export default function SettingsScreen() {
       Alert.alert('Permission Denied', 'Please grant gallery access to change your profile picture.');
       return;
     }
-    
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'] as any,
       allowsEditing: true,
@@ -133,13 +138,13 @@ export default function SettingsScreen() {
   const SettingItem = ({ icon: Icon, title, subtitle, value, onToggle, onPress, type = 'navigate', destructive = false }: any) => {
     const ItemContainer = onPress ? TouchableOpacity : View;
     return (
-      <ItemContainer 
-        style={[styles.settingItem, { borderBottomColor: theme.border + '30' }]} 
+      <ItemContainer
+        style={[styles.settingItem, { borderBottomColor: theme.border + '30' }]}
         onPress={onPress}
         activeOpacity={0.7}
       >
         <View style={[
-          styles.iconBox, 
+          styles.iconBox,
           { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.1)' : (isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5') }
         ]}>
           <Icon color={destructive ? theme.error : theme.primary} size={18} />
@@ -149,8 +154,8 @@ export default function SettingsScreen() {
           {subtitle && <Text style={[styles.settingSubtitle, { color: theme.textLight }]}>{subtitle}</Text>}
         </View>
         {type === 'switch' ? (
-          <Switch 
-            value={value} 
+          <Switch
+            value={value}
             onValueChange={onToggle}
             trackColor={{ false: isDarkMode ? '#334155' : '#CBD5E1', true: theme.primary }}
             thumbColor={'white'}
@@ -177,7 +182,7 @@ export default function SettingsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Summary Card */}
-        <MotiView 
+        <MotiView
           from={{ opacity: 0, translateY: 10 }}
           animate={{ opacity: 1, translateY: 0 }}
           style={[styles.profileSummaryCard, { backgroundColor: theme.card, borderColor: theme.border }]}
@@ -193,8 +198,8 @@ export default function SettingsScreen() {
             <Text style={[styles.profileName, { color: theme.text }]}>{user?.full_name || 'AgriNex Farmer'}</Text>
             <Text style={[styles.profileEmail, { color: theme.textLight }]}>{user?.email || 'farmer@agrinex.com'}</Text>
           </View>
-          <TouchableOpacity 
-            style={[styles.editBadgeBtn, { backgroundColor: theme.mint }]} 
+          <TouchableOpacity
+            style={[styles.editBadgeBtn, { backgroundColor: theme.mint }]}
             onPress={() => router.push('/(tabs)/profile')}
           >
             <Text style={[styles.editBadgeText, { color: theme.primary }]}>Edit Profile</Text>
@@ -205,21 +210,21 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textLight }]}>MY ACCOUNT</Text>
           <View style={[styles.cardPanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <SettingItem 
-              icon={User} 
-              title="Edit Profile" 
+            <SettingItem
+              icon={User}
+              title="Edit Profile"
               subtitle="Update village, specialization and crops"
               onPress={() => router.push('/(tabs)/profile')}
             />
-            <SettingItem 
-              icon={Camera} 
-              title="Change Profile Photo" 
+            <SettingItem
+              icon={Camera}
+              title="Change Profile Photo"
               subtitle="Upload from camera or gallery"
               onPress={handleUploadPhoto}
             />
-            <SettingItem 
-              icon={Bookmark} 
-              title="Saved Posts & Bookmarks" 
+            <SettingItem
+              icon={Bookmark}
+              title="Saved Posts & Bookmarks"
               subtitle="View saved community articles"
               onPress={() => {
                 // Route to profile page and tell it to switch to Saved tab
@@ -233,25 +238,25 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textLight }]}>APP CONFIGURATION</Text>
           <View style={[styles.cardPanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <SettingItem 
-              icon={Bell} 
-              title="Notifications" 
+            <SettingItem
+              icon={Bell}
+              title="Notifications"
               subtitle="Push alerts & crop diagnostics"
               type="switch"
               value={notifications}
               onToggle={setNotifications}
             />
-            <SettingItem 
-              icon={Moon} 
-              title="Dark Mode" 
+            <SettingItem
+              icon={Moon}
+              title="Dark Mode"
               subtitle="Optimize app appearance"
               type="switch"
               value={isDarkMode}
               onToggle={toggleTheme}
             />
-            <SettingItem 
-              icon={Globe} 
-              title="Language" 
+            <SettingItem
+              icon={Globe}
+              title="Language"
               subtitle="English (US)"
               onPress={() => handleAlert('Select Language', 'Currently, AgriNex supports English. More languages (Hindi, Marathi, Spanish) are coming in the next release.')}
             />
@@ -262,17 +267,17 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textLight }]}>SECURITY & PRIVACY</Text>
           <View style={[styles.cardPanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <SettingItem 
-              icon={Lock} 
-              title="Account Privacy" 
+            <SettingItem
+              icon={Lock}
+              title="Account Privacy"
               subtitle="Make account visible to followers only"
               type="switch"
               value={accountPrivacy}
               onToggle={setAccountPrivacy}
             />
-            <SettingItem 
-              icon={Trash2} 
-              title="Delete Account" 
+            <SettingItem
+              icon={Trash2}
+              title="Delete Account"
               subtitle="Permanently remove your database records"
               onPress={handleDeleteAccount}
               destructive={true}
@@ -284,21 +289,21 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textLight }]}>HELP & SUPPORT</Text>
           <View style={[styles.cardPanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <SettingItem 
-              icon={MessageCircle} 
-              title="Help Center" 
+            <SettingItem
+              icon={MessageCircle}
+              title="Help Center"
               subtitle="FAQs and support chat ticket"
               onPress={() => handleAlert('Help Center', 'Please send an email to support@agrinex.com for priority help.')}
             />
-            <SettingItem 
-              icon={Info} 
-              title="About AgriNex" 
+            <SettingItem
+              icon={Info}
+              title="About AgriNex"
               subtitle="AgriTech mission & details"
               onPress={() => router.push('/about')}
             />
-            <SettingItem 
-              icon={Shield} 
-              title="Privacy Policy" 
+            <SettingItem
+              icon={Shield}
+              title="Privacy Policy"
               subtitle="Data collection policy details"
               onPress={() => handleAlert('Privacy Policy', 'AgriNex strictly encrypts your farm records and does not share scanning data with third parties.')}
             />
@@ -306,8 +311,8 @@ export default function SettingsScreen() {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity 
-          style={[styles.logoutBtn, { backgroundColor: isDarkMode ? '#451a1a' : '#FEF2F2', borderColor: isDarkMode ? '#7f1d1d' : '#FEE2E2' }]} 
+        <TouchableOpacity
+          style={[styles.logoutBtn, { backgroundColor: isDarkMode ? '#451a1a' : '#FEF2F2', borderColor: isDarkMode ? '#7f1d1d' : '#FEE2E2' }]}
           onPress={handleLogout}
           activeOpacity={0.8}
         >

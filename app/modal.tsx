@@ -1,6 +1,6 @@
+import React from 'react';
+import { View, Text, Platform, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet } from 'react-native';
-
 import { HelpCircle, Mail, Globe, Shield } from 'lucide-react-native';
 import Colors from '../constants/Colors';
 import { useThemeStore } from '../store/useThemeStore';
@@ -17,23 +17,19 @@ export default function ModalScreen() {
         </View>
         <Text style={[styles.title, { color: theme.text }]}>AgriNex Support</Text>
         <Text style={[styles.subtitle, { color: theme.textLight }]}>How can we help you today?</Text>
-        
         <View style={styles.infoRow}>
           <Mail color={theme.primary} size={20} />
           <Text style={[styles.infoText, { color: theme.text }]}>support@agrinex.ai</Text>
         </View>
-        
         <View style={styles.infoRow}>
           <Globe color={theme.primary} size={20} />
           <Text style={[styles.infoText, { color: theme.text }]}>www.agrinex.ai/help</Text>
         </View>
-
         <View style={styles.infoRow}>
           <Shield color={theme.primary} size={20} />
           <Text style={[styles.infoText, { color: theme.text }]}>Version 2.0.4 (Stable)</Text>
         </View>
       </View>
-
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );

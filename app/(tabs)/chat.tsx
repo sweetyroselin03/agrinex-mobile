@@ -153,7 +153,7 @@ export default function ChatTab() {
 
   // Load chat system on mount
   useEffect(() => {
-    checkAuth().catch(() => {});
+    checkAuth().catch(() => { });
     loadConversations();
   }, []);
 
@@ -354,7 +354,7 @@ export default function ChatTab() {
           message: titleToSave,
         });
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const pickImage = async (source: 'camera' | 'library') => {
@@ -599,9 +599,13 @@ export default function ChatTab() {
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           logout();
-          router.replace('/(auth)/welcome');
+          await AsyncStorage.multiRemove([
+            'agrinex_remembered_creds',
+            'agrinex_onboarding_completed',
+          ]);
+          router.replace('/');
         },
       },
     ]);

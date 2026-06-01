@@ -45,7 +45,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, translateX: 0 }}
           >
             <Text style={styles.greeting}>Good Morning,</Text>
-            <Text style={styles.userName}>{user?.name || 'Farmer John'}</Text>
+            <Text style={styles.userName}>{user ? user.full_name || user.email || 'Farmer John' : 'Farmer John'}</Text>
           </MotiView>
           <TouchableOpacity style={styles.notificationBtn}>
             <View style={styles.dot} />

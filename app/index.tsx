@@ -1,9 +1,4 @@
 import React, { useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Temporarily add inside useEffect to reset:
-await AsyncStorage.removeItem('agrinex_onboarding_completed');
-await AsyncStorage.removeItem('agrinex_remembered_creds');
 import {
   View,
   Text,
