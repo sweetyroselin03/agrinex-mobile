@@ -6,22 +6,23 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "agrinex",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "primaryColor": "#10B981",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7FAFC"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/images/icon.png"
     },
     "android": {
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#F7FAFC"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.agrinex.app",
       "edgeToEdgeEnabled": true,
@@ -44,12 +45,12 @@
       "typedRoutes": true
     },
     "androidStatusBar": {
-      "backgroundColor": "#F7FAFC",
+      "backgroundColor": "#ffffff",
       "barStyle": "dark-content",
       "translucent": true
     },
     "androidNavigationBar": {
-      "backgroundColor": "#F7FAFC",
+      "backgroundColor": "#ffffff",
       "barStyle": "dark-content"
     },
     "extra": {

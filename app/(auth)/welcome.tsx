@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, Dimensions,
-  Image, StatusBar, Pressable, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  StatusBar,
+  Pressable,
+  Platform,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,28 +28,34 @@ const SLIDES = [
     title: 'Grow Smarter\nwith AI',
     description: 'Detect diseases, improve yield, and manage crops effortlessly with cutting-edge AI.',
     badge: '🌾 Smart Farming',
-    image: require('../../assets/images/splash_wheat_field.png'),
     accent: '#00D98B',
+    bgDark: '#022C22',
+    bgLight: '#D1FAE5',
   },
   {
     title: 'Instant Crop\nDiagnosis',
     description: 'Point your camera at any leaf and get AI-powered disease detection in seconds.',
     badge: '🔬 Disease Scanner',
-    image: require('../../assets/images/onboarding_scan.png'),
     accent: '#38BDF8',
+    bgDark: '#0C1A3A',
+    bgLight: '#EFF6FF',
   },
   {
     title: 'Connect\n& Learn',
     description: 'Share experiences, ask questions, and learn from farmers worldwide.',
     badge: '👨‍🌾 Community',
-    image: require('../../assets/images/onboarding_ai.png'),
     accent: '#A78BFA',
+    bgDark: '#2D1B69',
+    bgLight: '#F5F3FF',
   },
 ];
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const scheme = useColorScheme();
+  const isDark = scheme !== 'light';
   const { isAuthenticated, token } = useAuthStore();
+
   const scrollX = useSharedValue(0);
   const [current, setCurrent] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -51,9 +63,28 @@ export default function WelcomeScreen() {
   const buttonScale = useSharedValue(1);
   const screenOpacity = useSharedValue(0);
 
+  // ─── Theme ─────────────────────────────────────────────────────────────────
+  const titleColor = isDark ? '#FFFFFF' : '#0f172a';
+  const descColor = isDark ? 'rgba(255,255,255,0.78)' : 'rgba(15,23,42,0.7)';
+  const brandColor = isDark ? '#FFFFFF' : '#0f172a';
+  const skipColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,23,42,0.5)';
+  const loginColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(15,23,42,0.5)';
+  const inactiveDot = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+  const containerBg = isDark ? '#000' : '#fff';
+
   useEffect(() => {
     const init = async () => {
       try {
+        const onboardingCompleted = await AsyncStorage.getItem('agrinex_onboarding_completed');
+        if (onboardingCompleted === 'true') {
+          if (isAuthenticated && token) {
+            router.replace('/(tabs)');
+            return;
+          }
+          router.replace('/(auth)/login');
+          return;
+        }
+
         if (isAuthenticated && token) {
           router.replace('/(tabs)');
           return;
@@ -70,11 +101,12 @@ export default function WelcomeScreen() {
     init();
   }, [isAuthenticated, token]);
 
-  const goToLogin = () => {
-    router.replace('/(auth)/login');
-  };
+  const goToLogin = () => { router.replace('/(auth)/login'); };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    try {
+      await AsyncStorage.setItem('agrinex_onboarding_completed', 'true');
+    } catch (_) {}
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     screenOpacity.value = withTiming(0, { duration: 300 }, () => {
       runOnJS(goToLogin)();
@@ -102,63 +134,78 @@ export default function WelcomeScreen() {
     setCurrent(Math.round(e.nativeEvent.contentOffset.x / width));
   };
 
-  const bgStyle = (i: number) =>
-    useAnimatedStyle(() => {
-      const start = (i - 1) * width;
-      const center = i * width;
-      const end = (i + 1) * width;
-      const opacity = interpolate(scrollX.value, [start, center, end], [0, 1, 0], 'clamp');
-      const scale = interpolate(scrollX.value, [start, center, end], [1.08, 1.0, 1.08], 'clamp');
-      return { opacity, transform: [{ scale }] };
+  // ─── Pre-created Animated Styles to adhere to Rules of Hooks ─────────────────
+  const bgStyles = SLIDES.map((_, i) => {
+    return useAnimatedStyle(() => {
+      const opacity = interpolate(
+        scrollX.value,
+        [(i - 1) * width, i * width, (i + 1) * width],
+        [0, 1, 0],
+        'clamp',
+      );
+      return { opacity };
     });
+  });
 
-  const contentStyle = (i: number) =>
-    useAnimatedStyle(() => {
+  const contentStyles = SLIDES.map((_, i) => {
+    return useAnimatedStyle(() => {
       const offset = i * width;
       const opacity = interpolate(scrollX.value, [offset - width, offset, offset + width], [0, 1, 0], 'clamp');
       const ty = interpolate(scrollX.value, [offset - width, offset, offset + width], [30, 0, -30], 'clamp');
       const scale = interpolate(scrollX.value, [offset - width, offset, offset + width], [0.92, 1, 0.92], 'clamp');
       return { opacity, transform: [{ translateY: ty }, { scale }] };
     });
+  });
 
-  const getDotStyle = (index: number) =>
-    useAnimatedStyle(() => {
-      const targetPos = index * width;
+  const dotStyles = SLIDES.map((_, i) => {
+    return useAnimatedStyle(() => {
+      const targetPos = i * width;
       const input = [targetPos - width, targetPos, targetPos + width];
       const dotW = interpolate(scrollX.value, input, [8, 28, 8], 'clamp');
       const opacity = interpolate(scrollX.value, input, [0.3, 1.0, 0.3], 'clamp');
       return { width: dotW, opacity };
     });
+  });
 
   const screenStyle = useAnimatedStyle(() => ({ opacity: screenOpacity.value }));
 
   if (!isReady) return null;
 
   return (
-    <Animated.View style={[styles.container, screenStyle]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <Animated.View style={[styles.container, { backgroundColor: containerBg }, screenStyle]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        translucent
+        backgroundColor="transparent"
+      />
 
+      {/* Gradient backgrounds per slide — no images */}
       {SLIDES.map((slide, i) => (
-        <Animated.View key={i} style={[StyleSheet.absoluteFill, bgStyle(i)]}>
-          <Image source={slide.image} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Animated.View key={i} style={[StyleSheet.absoluteFill, bgStyles[i]]}>
           <LinearGradient
-            colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.93)']}
-            locations={[0, 0.5, 1]}
+            colors={
+              isDark
+                ? [slide.bgDark, slide.accent + '55', '#000000']
+                : [slide.bgLight, slide.accent + '33', '#ffffff']
+            }
+            locations={[0, 0.6, 1]}
             style={StyleSheet.absoluteFill}
           />
         </Animated.View>
       ))}
 
+      {/* Top bar */}
       <SafeAreaView edges={['top']} style={styles.topBar}>
         <View style={styles.brandRow}>
           <BrandLogo size={26} animated={false} />
-          <Text style={styles.brandName}>AgriNex</Text>
+          <Text style={[styles.brandName, { color: brandColor }]}>AgriNex</Text>
         </View>
         <Pressable onPress={handleFinish} hitSlop={16} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={[styles.skipText, { color: skipColor }]}>Skip</Text>
         </Pressable>
       </SafeAreaView>
 
+      {/* Slides */}
       <Animated.ScrollView
         ref={scrollRef}
         horizontal
@@ -173,22 +220,31 @@ export default function WelcomeScreen() {
         {SLIDES.map((slide, i) => (
           <View key={i} style={styles.slide}>
             <View style={styles.slideInner}>
-              <Animated.View style={[styles.contentBlock, contentStyle(i)]}>
+              <Animated.View style={[styles.contentBlock, contentStyles[i]]}>
+
+                {/* Large emoji icon */}
+                <View style={[styles.iconCircle, { backgroundColor: slide.accent + '22', borderColor: slide.accent + '55' }]}>
+                  <Text style={styles.iconEmoji}>{slide.badge.split(' ')[0]}</Text>
+                </View>
+
                 <View style={[styles.badge, {
                   borderColor: slide.accent + '60',
                   backgroundColor: slide.accent + '22',
                 }]}>
                   <Text style={[styles.badgeText, { color: slide.accent }]}>{slide.badge}</Text>
                 </View>
-                <Text style={styles.title}>{slide.title}</Text>
+
+                <Text style={[styles.title, { color: titleColor }]}>{slide.title}</Text>
                 <View style={[styles.accentLine, { backgroundColor: slide.accent }]} />
-                <Text style={styles.description}>{slide.description}</Text>
+                <Text style={[styles.description, { color: descColor }]}>{slide.description}</Text>
+
               </Animated.View>
             </View>
           </View>
         ))}
       </Animated.ScrollView>
 
+      {/* Bottom controls */}
       <View style={styles.bottomContainer}>
         <View style={styles.indicatorRow}>
           {SLIDES.map((slide, i) => (
@@ -196,8 +252,8 @@ export default function WelcomeScreen() {
               key={i}
               style={[
                 styles.dot,
-                getDotStyle(i),
-                { backgroundColor: current === i ? SLIDES[current].accent : 'rgba(255,255,255,0.3)' },
+                dotStyles[i],
+                { backgroundColor: current === i ? SLIDES[current].accent : inactiveDot },
               ]}
             />
           ))}
@@ -224,7 +280,7 @@ export default function WelcomeScreen() {
         </Animated.View>
 
         <Pressable onPress={handleFinish}>
-          <Text style={styles.loginText}>
+          <Text style={[styles.loginText, { color: loginColor }]}>
             Already have an account?{' '}
             <Text style={{ color: SLIDES[current].accent, fontWeight: '800' }}>Log In</Text>
           </Text>
@@ -235,15 +291,16 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1 },
   slide: { width, height },
   slideInner: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 28,
-    paddingBottom: 230,
+    paddingBottom: 180,
   },
-  contentBlock: { width: '100%' },
+  contentBlock: { width: '100%', alignItems: 'center' },
   topBar: {
     position: 'absolute',
     top: 0,
@@ -257,28 +314,22 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 56 : 44,
     paddingBottom: 12,
   },
-  brandRow: {
-    flexDirection: 'row',
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  brandName: { fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
+  skipBtn: { paddingHorizontal: 4, paddingVertical: 8, backgroundColor: 'transparent' },
+  skipText: { fontSize: 15, fontWeight: '600' },
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 28,
   },
-  brandName: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  skipBtn: {
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-  },
-  skipText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  iconEmoji: { fontSize: 52 },
   badge: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -289,28 +340,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 42,
     fontWeight: '900',
-    color: '#FFFFFF',
     lineHeight: 48,
     letterSpacing: -0.8,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textAlign: 'center',
+    marginBottom: 0,
   },
-  accentLine: {
-    width: 44,
-    height: 3,
-    borderRadius: 2,
-    marginTop: 14,
-    marginBottom: 14,
-  },
+  accentLine: { width: 44, height: 3, borderRadius: 2, marginTop: 14, marginBottom: 14 },
   description: {
     fontSize: 16,
     lineHeight: 25,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.78)',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textAlign: 'center',
   },
   bottomContainer: {
     position: 'absolute',
@@ -337,20 +377,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
   },
-  primaryBtnGradient: {
-    height: 58,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  loginText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  primaryBtnGradient: { height: 58, justifyContent: 'center', alignItems: 'center' },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
+  loginText: { fontSize: 14, fontWeight: '600' },
 });
