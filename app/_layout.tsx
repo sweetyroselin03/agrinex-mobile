@@ -8,19 +8,9 @@ import { useThemeStore } from '../store/useThemeStore';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useAuthStore } from '../store/useAuthStore';
 import Colors from '../constants/Colors';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-  withDelay,
-} from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 
-import BrandLogo from '../components/BrandLogo';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const queryClient = new QueryClient();
@@ -105,7 +95,7 @@ export default function Layout() {
   };
 
   if (!isReady) {
-    return <SplashScreen isDarkMode={isDarkMode} bgColor={customTheme.colors.background} textColor={customTheme.colors.text} />;
+    return <SplashScreen isDarkMode={isDarkMode} />;
   }
 
   return (
@@ -135,60 +125,48 @@ export default function Layout() {
   );
 }
 
-// ─── Premium Reanimated Splash Screen ────────────────────────────────────────
-function SplashScreen({ isDarkMode, bgColor, textColor }: { isDarkMode: boolean; bgColor: string; textColor: string }) {
-  const containerOpacity = useSharedValue(0);
-  const logoScale = useSharedValue(0.85);
-  const logoOpacity = useSharedValue(0);
-  const subtitleOpacity = useSharedValue(0);
-  const blobScale = useSharedValue(0.8);
+// ─── Plain Text Splash Screen (no Reanimated, no image) ──────────────────────
+function SplashScreen({ isDarkMode }: { isDarkMode: boolean }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const subtitleFade = useRef(new Animated.Value(0)).current;
+  const loaderFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Container fade
-    containerOpacity.value = withTiming(1, { duration: 600 });
-    // Logo entrance
-    logoOpacity.value = withDelay(200, withTiming(1, { duration: 700 }));
-    logoScale.value = withDelay(200, withTiming(1, { duration: 700 }));
-    // Subtitle stagger
-    subtitleOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
-    // Blob breathe
-    blobScale.value = withDelay(400, withRepeat(withSequence(
-      withTiming(1.15, { duration: 3000 }),
-      withTiming(0.9, { duration: 3000 })
-    ), -1, true));
-    // Subtle logo breathing after entrance
-    setTimeout(() => {
-      logoScale.value = withRepeat(withSequence(
-        withTiming(1.03, { duration: 2800 }),
-        withTiming(0.98, { duration: 2800 })
-      ), -1, true);
-    }, 900);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+      ]),
+      Animated.timing(subtitleFade, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(loaderFade, { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  const containerStyle = useAnimatedStyle(() => ({ opacity: containerOpacity.value }));
-  const logoStyle = useAnimatedStyle(() => ({ opacity: logoOpacity.value, transform: [{ scale: logoScale.value }] }));
-  const subtitleStyle = useAnimatedStyle(() => ({ opacity: subtitleOpacity.value }));
-  const blob1Style = useAnimatedStyle(() => ({ transform: [{ scale: blobScale.value }], opacity: 0.10 }));
-  const blob2Style = useAnimatedStyle(() => ({ transform: [{ scale: blobScale.value * 0.95 }], opacity: 0.07 }));
+  const BG = isDarkMode ? '#06131D' : '#F8FAF9';
+  const ACCENT = '#22E58B';
 
   return (
-    <Animated.View style={[splashStyles.container, { backgroundColor: bgColor }, containerStyle]}>
+    <View style={[splashStyles.container, { backgroundColor: BG }]}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-      {/* Background blobs */}
-      <Animated.View pointerEvents="none" style={[splashStyles.blob, splashStyles.blob1, blob1Style, { backgroundColor: '#10B981' }]} />
-      <Animated.View pointerEvents="none" style={[splashStyles.blob, splashStyles.blob2, blob2Style, { backgroundColor: '#34D399' }]} />
-      <Animated.View style={[splashStyles.logoWrapper, logoStyle]}>
-        <BrandLogo size={84} animated={true} isDarkMode={isDarkMode} />
+
+      <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }], alignItems: 'center' }}>
+        <Text style={[splashStyles.title, { color: isDarkMode ? '#FFFFFF' : '#0D1B2A' }]}>
+          AgriNex
+        </Text>
+        <Text style={[splashStyles.titleAccent, { color: ACCENT }]}>AI</Text>
       </Animated.View>
-      <Animated.View style={[splashStyles.textBlock, logoStyle]}>
-        <Text style={[splashStyles.title, { color: textColor }]}>AgriNex</Text>
-      </Animated.View>
-      <Animated.View style={subtitleStyle}>
-        <Text style={[splashStyles.subtitle, { color: isDarkMode ? '#6EE7B7' : '#059669' }]}>
-          Smart Farming. Better Future.
+
+      <Animated.View style={{ opacity: subtitleFade, marginTop: 12 }}>
+        <Text style={[splashStyles.subtitle, { color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(13,27,42,0.45)' }]}>
+          Smart Farming Powered by AI
         </Text>
       </Animated.View>
-    </Animated.View>
+
+      <Animated.View style={[splashStyles.loaderWrapper, { opacity: loaderFade }]}>
+        <ActivityIndicator size="small" color={ACCENT} />
+      </Animated.View>
+    </View>
   );
 }
 
@@ -198,54 +176,29 @@ const splashStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoWrapper: {
-    marginBottom: 8,
-  },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  logoEmoji: {
-    fontSize: 42,
-  },
-  textBlock: {
-    marginTop: 6,
-  },
   title: {
-    fontSize: 30,
+    fontSize: 48,
     fontWeight: '900',
-    letterSpacing: -0.8,
+    letterSpacing: -1.5,
+    textAlign: 'center',
+  },
+  titleAccent: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 4,
+    marginTop: -4,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 6,
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 1,
     textAlign: 'center',
-    letterSpacing: 0.3,
   },
-  blob: {
-    position: 'absolute',
-    borderRadius: 999,
-  },
-  blob1: {
-    width: 260,
-    height: 260,
-    top: -80,
-    left: -90,
-  },
-  blob2: {
-    width: 220,
-    height: 220,
-    bottom: -60,
-    right: -70,
+  loaderWrapper: {
+    marginTop: 40,
+    height: 30,
+    justifyContent: 'center',
   },
 });
+

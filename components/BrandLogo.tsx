@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Image, ViewStyle } from 'react-native';
+import { View, StyleSheet, Text, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 
 interface BrandLogoProps {
   size?: number;
@@ -15,73 +16,88 @@ interface BrandLogoProps {
   style?: ViewStyle;
   /** Pass isDarkMode so the logo container adapts to the current theme */
   isDarkMode?: boolean;
+  /** Show the text name beside or below the icon */
+  showName?: boolean;
+  /** Layout direction */
+  layout?: 'horizontal' | 'vertical';
 }
 
-export default function BrandLogo({ size = 84, animated = false, style, isDarkMode = true }: BrandLogoProps) {
-  const pulseScale1 = useSharedValue(1);
-  const pulseOpacity1 = useSharedValue(0.45);
-  const pulseScale2 = useSharedValue(1);
-  const pulseOpacity2 = useSharedValue(0.6);
+/** Pure SVG leaf icon — no image file dependency */
+function LeafIcon({ size, color }: { size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22L6.66 19.7C7.14 19.87 7.64 20 8.17 20C12.87 20 16.46 15.94 17.73 12.42C19 8.9 19 4 19 4C15.18 4 12.42 5.07 10.6 6.4"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill={color + '30'}
+      />
+      <Path
+        d="M8 16C9.5 13 12 10 17 8"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export default function BrandLogo({
+  size = 84,
+  animated = false,
+  style,
+  isDarkMode = true,
+  showName = false,
+  layout = 'vertical',
+}: BrandLogoProps) {
   const breathingScale = useSharedValue(1);
   const breathingFloat = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.4);
 
   useEffect(() => {
     if (animated) {
-      pulseScale1.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 0 }),
-          withTiming(1.45, { duration: 3200, easing: Easing.out(Easing.ease) })
-        ), -1, false
-      );
-      pulseOpacity1.value = withRepeat(
-        withSequence(
-          withTiming(0.45, { duration: 0 }),
-          withTiming(0, { duration: 3200, easing: Easing.out(Easing.ease) })
-        ), -1, false
-      );
-      pulseScale2.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 0 }),
-          withTiming(1.25, { duration: 2000, easing: Easing.out(Easing.ease) })
-        ), -1, false
-      );
-      pulseOpacity2.value = withRepeat(
-        withSequence(
-          withTiming(0.6, { duration: 0 }),
-          withTiming(0, { duration: 2000, easing: Easing.out(Easing.ease) })
-        ), -1, false
-      );
       breathingScale.value = withRepeat(
         withSequence(
-          withTiming(1.05, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.04, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
           withTiming(1.0, { duration: 2200, easing: Easing.inOut(Easing.ease) })
-        ), -1, true
+        ),
+        -1,
+        true
       );
       breathingFloat.value = withRepeat(
         withSequence(
-          withTiming(-4, { duration: 2600, easing: Easing.inOut(Easing.ease) }),
-          withTiming(4, { duration: 2600, easing: Easing.inOut(Easing.ease) })
-        ), -1, true
+          withTiming(-3, { duration: 2600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(3, { duration: 2600, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 0 }),
+          withTiming(1.35, { duration: 2800, easing: Easing.out(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 0 }),
+          withTiming(0, { duration: 2800, easing: Easing.out(Easing.ease) })
+        ),
+        -1,
+        false
       );
     } else {
-      pulseScale1.value = 1;
-      pulseOpacity1.value = 0;
-      pulseScale2.value = 1;
-      pulseOpacity2.value = 0;
       breathingScale.value = 1;
       breathingFloat.value = 0;
+      pulseScale.value = 1;
+      pulseOpacity.value = 0;
     }
   }, [animated]);
-
-  const pulseRingStyle1 = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale1.value }],
-    opacity: pulseOpacity1.value,
-  }));
-
-  const pulseRingStyle2 = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale2.value }],
-    opacity: pulseOpacity2.value,
-  }));
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [
@@ -90,79 +106,94 @@ export default function BrandLogo({ size = 84, animated = false, style, isDarkMo
     ],
   }));
 
-  const totalContainerSize = size + 28;
+  const pulseRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+  }));
 
-  const pulseRingOuterStyle1 = {
-    position: 'absolute' as const,
-    width: size + 28,
-    height: size + 28,
-    borderRadius: (size + 28) / 2,
-    borderWidth: 1.2,
-    borderColor: 'rgba(16,185,129,0.35)',
-  };
-
-  const pulseRingOuterStyle2 = {
-    position: 'absolute' as const,
-    width: size + 12,
-    height: size + 12,
-    borderRadius: (size + 12) / 2,
-    borderWidth: 1.8,
-    borderColor: 'rgba(16,185,129,0.6)',
-  };
-
-  const imageContainerStyle = {
-    width: size,
-    height: size,
-    overflow: 'hidden' as const,
-    backgroundColor: 'transparent',
-  };
+  const accent = '#22E58B';
+  const containerSize = size + 20;
+  const iconSize = size * 0.55;
 
   return (
     <View
       style={[
         styles.logoContainer,
-        { width: totalContainerSize, height: totalContainerSize },
+        layout === 'horizontal' ? styles.horizontal : styles.vertical,
         style,
       ]}
     >
-      {animated && (
-        <>
-          <View
+      <View style={{ width: containerSize, height: containerSize, justifyContent: 'center', alignItems: 'center' }}>
+        {/* Pulse ring */}
+        {animated && (
+          <Animated.View
             style={[
-              styles.glowDiffusion,
-              { width: size * 1.5, height: size * 1.5, borderRadius: size },
+              {
+                position: 'absolute',
+                width: containerSize,
+                height: containerSize,
+                borderRadius: containerSize / 2,
+                borderWidth: 1.5,
+                borderColor: accent + '50',
+              },
+              pulseRingStyle,
             ]}
           />
-          <Animated.View style={[pulseRingOuterStyle1, pulseRingStyle1]} />
-          <Animated.View style={[pulseRingOuterStyle2, pulseRingStyle2]} />
-        </>
-      )}
+        )}
 
-      <Animated.View
-        style={[
-          { width: size, height: size },
-          animated ? animatedContainerStyle : null,
-        ]}
-      >
-        <View style={imageContainerStyle}>
-          <Image
-            source={require('../assets/images/logo.png')}
-            style={{ width: size, height: size, resizeMode: 'contain' }}
-          />
-        </View>
-      </Animated.View>
+        {/* Icon circle */}
+        <Animated.View
+          style={[
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              backgroundColor: isDarkMode ? accent + '18' : accent + '12',
+              borderWidth: 1.5,
+              borderColor: accent + '40',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+            animated ? animatedContainerStyle : undefined,
+          ]}
+        >
+          <LeafIcon size={iconSize} color={accent} />
+        </Animated.View>
+      </View>
+
+      {showName && (
+        <Text
+          style={[
+            styles.brandName,
+            {
+              color: isDarkMode ? '#FFFFFF' : '#0D1B2A',
+              marginTop: layout === 'vertical' ? 8 : 0,
+              marginLeft: layout === 'horizontal' ? 10 : 0,
+            },
+          ]}
+        >
+          AgriNex
+        </Text>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   logoContainer: {
-    justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+    justifyContent: 'center',
   },
-  glowDiffusion: {
-    position: 'absolute',
-    backgroundColor: 'rgba(16,185,129,0.12)',
+  vertical: {
+    flexDirection: 'column',
+  },
+  horizontal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  brandName: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 });

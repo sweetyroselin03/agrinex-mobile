@@ -10,11 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BrandLogo from '../components/BrandLogo';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useAuthStore } from '../store/useAuthStore';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 const ONBOARDING_KEY = 'agrinex_onboarding_completed';
 
 export default function Index() {
@@ -22,49 +21,46 @@ export default function Index() {
   const { isDarkMode, theme } = useAppTheme();
   const { checkAuth } = useAuthStore();
 
-  // Animated values using standard React Native Animated API
+  // Animated values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const contentFadeAnim = useRef(new Animated.Value(0)).current;
-  const contentSlideAnim = useRef(new Animated.Value(20)).current;
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const subtitleFade = useRef(new Animated.Value(0)).current;
+  const loaderFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Run animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    // Staggered fade-in
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(subtitleFade, {
         toValue: 1,
-        duration: 1000,
+        duration: 500,
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
+      Animated.timing(loaderFade, {
         toValue: 1,
-        friction: 6,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-      Animated.timing(contentFadeAnim, {
-        toValue: 1,
-        duration: 800,
-        delay: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(contentSlideAnim, {
-        toValue: 0,
-        duration: 800,
-        delay: 500,
+        duration: 400,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Start navigation timeout
+    // Navigation after splash
     const timer = setTimeout(async () => {
       try {
-        // Ensure auth check is completed
         await checkAuth();
-
         const onboardingDone = await AsyncStorage.getItem(ONBOARDING_KEY);
         if (onboardingDone === 'true') {
-          // Returning user: go to Home Screen if authenticated, otherwise to Welcome screen
           const isAuthed = useAuthStore.getState().isAuthenticated;
           if (isAuthed) {
             router.replace('/(tabs)');
@@ -72,77 +68,61 @@ export default function Index() {
             router.replace('/(auth)/welcome');
           }
         } else {
-          // First-time user: go to Onboarding
           router.replace('/onboarding');
         }
       } catch (e) {
         console.error('[Splash] Navigation flow error:', e);
         router.replace('/onboarding');
       }
-    }, 2800); // Duration: 2.8 seconds
+    }, 2800);
 
     return () => clearTimeout(timer);
   }, []);
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+  const BG = isDarkMode ? '#06131D' : '#F8FAF9';
+  const ACCENT = '#22E58B';
 
-      {/* Decorative background blobs - theme aware */}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.blob,
-          styles.blob1,
-          { backgroundColor: isDarkMode ? 'rgba(0, 210, 106, 0.05)' : 'rgba(0, 210, 106, 0.03)' }
-        ]}
-      />
-      <View
-        pointerEvents="none"
-        style={[
-          styles.blob,
-          styles.blob2,
-          { backgroundColor: isDarkMode ? 'rgba(34, 139, 230, 0.05)' : 'rgba(34, 139, 230, 0.03)' }
-        ]}
+  return (
+    <View style={[styles.container, { backgroundColor: BG }]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        translucent
+        backgroundColor="transparent"
       />
 
       <View style={styles.centerContent}>
-        {/* Animated logo wrapper */}
-        <Animated.View
-          style={[
-            styles.logoWrapper,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
-          <BrandLogo size={120} animated={true} isDarkMode={isDarkMode} />
-        </Animated.View>
-
-        {/* Animated text blocks */}
+        {/* App name — large, bold, clean */}
         <Animated.View
           style={{
-            opacity: contentFadeAnim,
-            transform: [{ translateY: contentSlideAnim }],
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
             alignItems: 'center',
           }}
         >
-          <Text style={[styles.title, { color: theme.text }]}>AgriNex AI</Text>
-          <Text style={[styles.tagline, { color: theme.textLight }]}>
+          <Text style={[styles.title, { color: isDarkMode ? '#FFFFFF' : '#0D1B2A' }]}>
+            AgriNex
+          </Text>
+          <Text style={[styles.titleAccent, { color: ACCENT }]}>
+            AI
+          </Text>
+        </Animated.View>
+
+        {/* Tagline */}
+        <Animated.View style={{ opacity: subtitleFade, marginTop: 12 }}>
+          <Text style={[styles.tagline, { color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(13,27,42,0.45)' }]}>
             Smart Farming Powered by AI
           </Text>
         </Animated.View>
 
-        {/* Premium loader */}
-        <Animated.View style={[styles.loaderWrapper, { opacity: contentFadeAnim }]}>
-          <ActivityIndicator size="small" color="#00D26A" />
+        {/* Loader */}
+        <Animated.View style={[styles.loaderWrapper, { opacity: loaderFade }]}>
+          <ActivityIndicator size="small" color={ACCENT} />
         </Animated.View>
       </View>
 
       {/* Version footer */}
-      <Animated.View style={[styles.bottomContainer, { opacity: contentFadeAnim }]}>
-        <Text style={[styles.versionText, { color: theme.textLight, opacity: 0.4 }]}>
+      <Animated.View style={[styles.bottomContainer, { opacity: subtitleFade }]}>
+        <Text style={[styles.versionText, { color: isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(13,27,42,0.25)' }]}>
           Version 1.0.0
         </Text>
       </Animated.View>
@@ -161,30 +141,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  logoWrapper: {
-    marginBottom: 20,
-    shadowColor: '#00D26A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    elevation: 8,
-  },
   title: {
-    fontSize: 38,
+    fontSize: 48,
     fontWeight: '900',
-    letterSpacing: -1,
+    letterSpacing: -1.5,
     textAlign: 'center',
-    marginBottom: 8,
+  },
+  titleAccent: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 4,
+    marginTop: -4,
+    textAlign: 'center',
   },
   tagline: {
     fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '500',
+    letterSpacing: 1,
     textAlign: 'center',
-    opacity: 0.8,
   },
   loaderWrapper: {
-    marginTop: 36,
+    marginTop: 40,
     height: 30,
     justifyContent: 'center',
   },
@@ -197,21 +174,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2,
-  },
-  blob: {
-    position: 'absolute',
-    borderRadius: 999,
-  },
-  blob1: {
-    width: 300,
-    height: 300,
-    top: -60,
-    left: -60,
-  },
-  blob2: {
-    width: 250,
-    height: 250,
-    bottom: -50,
-    right: -50,
   },
 });
