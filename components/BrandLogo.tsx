@@ -8,38 +8,68 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 interface BrandLogoProps {
   size?: number;
   animated?: boolean;
   style?: ViewStyle;
-  /** Pass isDarkMode so the logo container adapts to the current theme */
   isDarkMode?: boolean;
-  /** Show the text name beside or below the icon */
   showName?: boolean;
-  /** Layout direction */
   layout?: 'horizontal' | 'vertical';
 }
 
-/** Pure SVG leaf icon — no image file dependency */
-function LeafIcon({ size, color }: { size: number; color: string }) {
+/** Vector AgriNex Smart Leaf + AI Circuit pattern SVG icon */
+export function AgriNexIcon({ size = 48 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <Defs>
+        <LinearGradient id="agriGreen" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#22C55E" />
+          <Stop offset="100%" stopColor="#15803D" />
+        </LinearGradient>
+        <LinearGradient id="aiGlow" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#86EFAC" />
+          <Stop offset="100%" stopColor="#22C55E" />
+        </LinearGradient>
+      </Defs>
+
+      {/* Outer Leaf Silhouette */}
       <Path
-        d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22L6.66 19.7C7.14 19.87 7.64 20 8.17 20C12.87 20 16.46 15.94 17.73 12.42C19 8.9 19 4 19 4C15.18 4 12.42 5.07 10.6 6.4"
-        stroke={color}
-        strokeWidth={1.8}
+        d="M34 14C18 18 13.8 30.3 9.64 40.7L13.42 42L15.32 37.4C16.28 37.7 17.28 38 18.34 38C27.74 38 34.92 29.88 37.46 22.84C40 15.8 40 6 40 6C32.36 6 26.84 8.14 23.2 10.8"
+        fill="url(#agriGreen)"
+        fillOpacity={0.25}
+        stroke="url(#agriGreen)"
+        strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
-        fill={color + '30'}
       />
+
+      {/* Main Vein with AI Circuit Node Connections */}
       <Path
-        d="M8 16C9.5 13 12 10 17 8"
-        stroke={color}
-        strokeWidth={1.5}
+        d="M16 32C19 26 24 20 34 14"
+        stroke="url(#aiGlow)"
+        strokeWidth={2.5}
         strokeLinecap="round"
       />
+      <Path
+        d="M22 26L28 28"
+        stroke="url(#aiGlow)"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M26 21L32 22"
+        stroke="url(#aiGlow)"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+
+      {/* AI Nodes */}
+      <Circle cx={34} cy={14} r={3.5} fill="#86EFAC" />
+      <Circle cx={28} cy={28} r={2.5} fill="#4ADE80" />
+      <Circle cx={32} cy={22} r={2.5} fill="#4ADE80" />
+      <Circle cx={16} cy={32} r={2.5} fill="#22C55E" />
     </Svg>
   );
 }
@@ -54,66 +84,39 @@ export default function BrandLogo({
 }: BrandLogoProps) {
   const breathingScale = useSharedValue(1);
   const breathingFloat = useSharedValue(0);
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.4);
 
   useEffect(() => {
     if (animated) {
       breathingScale.value = withRepeat(
         withSequence(
-          withTiming(1.04, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1.0, { duration: 2200, easing: Easing.inOut(Easing.ease) })
+          withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 2000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
       breathingFloat.value = withRepeat(
         withSequence(
-          withTiming(-3, { duration: 2600, easing: Easing.inOut(Easing.ease) }),
-          withTiming(3, { duration: 2600, easing: Easing.inOut(Easing.ease) })
+          withTiming(-3, { duration: 2400, easing: Easing.inOut(Easing.ease) }),
+          withTiming(3, { duration: 2400, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
-      pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 0 }),
-          withTiming(1.35, { duration: 2800, easing: Easing.out(Easing.ease) })
-        ),
-        -1,
-        false
-      );
-      pulseOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0.4, { duration: 0 }),
-          withTiming(0, { duration: 2800, easing: Easing.out(Easing.ease) })
-        ),
-        -1,
-        false
-      );
     } else {
       breathingScale.value = 1;
       breathingFloat.value = 0;
-      pulseScale.value = 1;
-      pulseOpacity.value = 0;
     }
   }, [animated]);
 
-  const animatedContainerStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: breathingScale.value },
       { translateY: breathingFloat.value },
     ],
   }));
 
-  const pulseRingStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
-
-  const accent = '#22E58B';
-  const containerSize = size + 20;
-  const iconSize = size * 0.55;
+  const containerSize = size;
 
   return (
     <View
@@ -123,56 +126,36 @@ export default function BrandLogo({
         style,
       ]}
     >
-      <View style={{ width: containerSize, height: containerSize, justifyContent: 'center', alignItems: 'center' }}>
-        {/* Pulse ring */}
-        {animated && (
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                width: containerSize,
-                height: containerSize,
-                borderRadius: containerSize / 2,
-                borderWidth: 1.5,
-                borderColor: accent + '50',
-              },
-              pulseRingStyle,
-            ]}
-          />
-        )}
-
-        {/* Icon circle */}
-        <Animated.View
-          style={[
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              backgroundColor: isDarkMode ? accent + '18' : accent + '12',
-              borderWidth: 1.5,
-              borderColor: accent + '40',
-              justifyContent: 'center',
-              alignItems: 'center',
-            },
-            animated ? animatedContainerStyle : undefined,
-          ]}
-        >
-          <LeafIcon size={iconSize} color={accent} />
-        </Animated.View>
-      </View>
+      <Animated.View
+        style={[
+          {
+            width: containerSize,
+            height: containerSize,
+            borderRadius: containerSize / 2,
+            backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)',
+            borderWidth: 1.5,
+            borderColor: 'rgba(34, 197, 94, 0.35)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          animated ? animatedStyle : undefined,
+        ]}
+      >
+        <AgriNexIcon size={size * 0.65} />
+      </Animated.View>
 
       {showName && (
         <Text
           style={[
             styles.brandName,
             {
-              color: isDarkMode ? '#FFFFFF' : '#0D1B2A',
-              marginTop: layout === 'vertical' ? 8 : 0,
-              marginLeft: layout === 'horizontal' ? 10 : 0,
+              color: isDarkMode ? '#FFFFFF' : '#0F172A',
+              marginTop: layout === 'vertical' ? 10 : 0,
+              marginLeft: layout === 'horizontal' ? 12 : 0,
             },
           ]}
         >
-          AgriNex
+          AgriNex AI
         </Text>
       )}
     </View>
@@ -192,8 +175,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   brandName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
 });

@@ -79,18 +79,18 @@ export default function Layout() {
   }, [isAuthenticated, segments, isReady, hasSeenOnboarding]);
 
   // Sync navigation theme with our store
-  const navigationTheme = DarkTheme;
+  const navigationTheme = isDarkMode ? DarkTheme : DefaultTheme;
   
   // Custom theme adjustments to match our branding
   const customTheme = {
     ...navigationTheme,
     colors: {
       ...navigationTheme.colors,
-      primary: '#22E58B',
-      background: '#06131D',
-      card: '#102235',
-      text: '#FFFFFF',
-      border: 'rgba(34,229,139,0.25)',
+      primary: '#16A34A',
+      background: isDarkMode ? '#06131D' : '#F8FAFC',
+      card: isDarkMode ? '#102235' : '#FFFFFF',
+      text: isDarkMode ? '#FFFFFF' : '#0F172A',
+      border: isDarkMode ? 'rgba(22,163,74,0.25)' : '#E2E8F0',
     }
   };
 

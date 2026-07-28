@@ -2,7 +2,10 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+buildDir = file("C:/tmp/agrinex_app_b")
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -130,6 +133,11 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
+    externalNativeBuild {
+        cmake {
+            buildStagingDirectory file("C:/tmp/cb")
+        }
+    }
 }
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
@@ -180,3 +188,16 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+tasks.withType(com.facebook.react.tasks.GenerateCodegenSchemaTask).configureEach {
+    doNotTrackState("Windows path compatibility")
+}
+
+afterEvaluate {
+    tasks.named("createBundleReleaseJsAndAssets").configure {
+        doNotTrackState("Windows path compatibility")
+    }
+}
+
+
+

@@ -20,5 +20,13 @@ allprojects {
   }
 }
 
+
+subprojects {
+  tasks.withType(com.facebook.react.tasks.GenerateCodegenSchemaTask).configureEach {
+    doNotTrackState("Windows path compatibility")
+  }
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
+

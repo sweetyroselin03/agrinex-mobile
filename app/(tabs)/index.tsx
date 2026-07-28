@@ -34,16 +34,32 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import client from '../../api/client';
 
+import * as Haptics from 'expo-haptics';
+import { useDirectChatStore } from '../../store/useDirectChatStore';
+
 const { width } = Dimensions.get('window');
 
 export default function Dashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { isDarkMode, theme } = useAppTheme();
+  const { conversations, fetchConversations } = useDirectChatStore();
 
   const [weather, setWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Unread messages count
+  const totalUnread = useMemo(() => {
+    return (conversations || []).reduce((acc, c) => acc + (c.unread_count || 0), 0);
+  }, [conversations]);
+
+  // Latest message snippet
+  const latestMessageSnippet = useMemo(() => {
+    if (!conversations || conversations.length === 0) return null;
+    const active = conversations.find(c => c.last_message);
+    return active?.last_message?.content || null;
+  }, [conversations]);
 
   // Get time-based greeting
   const greeting = useMemo(() => {
@@ -55,6 +71,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchConversations();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -70,7 +87,7 @@ export default function Dashboard() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await Promise.all([fetchDashboardData(), fetchConversations()]);
     setRefreshing(false);
   };
 
@@ -91,17 +108,39 @@ export default function Dashboard() {
 
       {/* Top Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { color: theme.textLight }]}>{greeting},</Text>
-          <Text style={[styles.name, { color: theme.text }]}>{user?.full_name || 'Farmer'} 👋</Text>
+          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{user?.full_name || 'Farmer'} 👋</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity 
             style={[styles.headerBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => router.push('/notifications')}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/notifications');
+            }}
+            activeOpacity={0.7}
           >
             <Bell color={theme.text} size={22} />
             <View style={[styles.notifDot, { backgroundColor: theme.error }]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.headerBtn, styles.msgBtn, { backgroundColor: '#16A34A', borderColor: '#15803D' }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/messages');
+            }}
+            activeOpacity={0.7}
+          >
+            <MessageSquare color="#FFFFFF" size={22} />
+            {totalUnread > 0 ? (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
+              </View>
+            ) : (
+              <View style={styles.onlineDot} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -257,6 +296,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    position: 'relative',
+  },
+  msgBtn: {
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   notifDot: {
     position: 'absolute',
@@ -267,6 +314,36 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 2,
     borderColor: 'white',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22C55E',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   scrollContent: {
     paddingHorizontal: 24,

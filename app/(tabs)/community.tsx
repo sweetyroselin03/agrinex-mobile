@@ -243,7 +243,13 @@ export default function CommunityTab() {
         <View style={styles.postHeader}>
           <TouchableOpacity
             style={styles.authorInfo}
-            onPress={() => router.push({ pathname: '/(tabs)/profile', params: { userId: post.user_id } })}
+            onPress={() => {
+              if (post.user_id && post.user_id !== user?.id) {
+                router.push(`/user/${post.user_id}` as any);
+              } else {
+                router.push('/(tabs)/profile');
+              }
+            }}
           >
             <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
               {post.author_avatar ? (
